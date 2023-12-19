@@ -1,0 +1,38 @@
+[package]
+name = "api_builder"
+license = "MIT"
+description = "A simple API builder, inspired by the GitLab crate built upon reqwest"
+repository = "https://github.com/Stefanuk12/api-builder"
+readme = "README.md"
+version = "0.1.0"
+edition = "2021"
+keywords = [
+    "api",
+    "builder",
+    "rest",
+    "restful",
+    "reqwest"
+]
+categories = [
+    "asynchronous",
+    "api-bindings"
+]
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+async-trait = "0.1"
+bytes = "1.5"
+http = "0.2"
+reqwest = { version = "0.11", features = ["blocking"], optional = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "1.0"
+url = "2.4"
+api_builder_derive = { path = "../api-builder-derive", optional = true }
+anyhow = "1.0"
+
+[features]
+default = ["reqwest", "derive"]
+reqwest = ["dep:reqwest"]
+derive = ["dep:api_builder_derive"]
