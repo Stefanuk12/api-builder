@@ -16,14 +16,8 @@ struct APIEndpointArgs {
     self_as_body: Option<String>,
     /// Serialize the struct as the body, assumes content-type header is `application/protobuf`.
     prost_self_as_body: Option<syn::Type>,
-    /// Deserialize the response as JSON.
-    serde_json: Option<bool>,
     /// Deserialize the response as Protobuf.
     prost_response: Option<bool>,
-    /// The type of the response.
-    response: Option<syn::Type>,
-    /// A unit response.
-    unit_response: Option<bool>,
     /// Whether to ignore errors from the response.
     ignore_errors: Option<bool>,
 }
@@ -80,8 +74,8 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
     // The implementation for each
     let method = _args.method
         .map(|m| quote! {
-            fn method(&self) -> ::api_builder::Method {
-                ::api_builder::Method::#m
+            fn method(&self) -> api_builder::Method {
+                api_builder::Method::#m
             }
         });
     add_impl_input!(impl_input, method);
@@ -119,46 +113,27 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let body = _args.self_as_body
         .map(|p| quote ! {
-            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, ::api_builder::error::BodyError> {
+            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, api_builder::error::BodyError> {
                 Ok(Some((#p, ::serde_json::to_vec(self)?)))
             }
         })
         .or_else(|| _args.prost_self_as_body.map(|p| quote ! {
-            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, ::api_builder::error::BodyError> {
+            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, api_builder::error::BodyError> {
                 use prost::Message;
                 Ok(Some(("application/protobuf", #p::from(self.clone()).encode_to_vec())))
             }
         }));
     add_impl_input!(impl_input, body);
 
-    if _args.serde_json.unwrap_or_default() {
+    if _args.prost_response.unwrap_or_default() {
         impl_input.0.items.push(syn::ImplItem::Verbatim(quote! {
-            fn deserialize(&self, response: ::api_builder::Response<::api_builder::Bytes>) -> Result<Self::Response, ::api_builder::error::BodyError> {
-                Ok(::serde_json::from_slice(&response.body())?)
-            }
-        }));
-    } else if _args.prost_response.unwrap_or_default() {
-        impl_input.0.items.push(syn::ImplItem::Verbatim(quote! {
-            fn deserialize(&self, response: ::api_builder::Response<::api_builder::Bytes>) -> Result<Self::Response, ::api_builder::error::BodyError> {
+            fn deserialize(&self, response: api_builder::Response<api_builder::Bytes>) -> Result<Self::Response, api_builder::error::BodyError> {
                 use prost::Message;
-                Self::Response::decode(response.body().clone()).map_err(|_| ::api_builder::error::BodyError::Deserialize)
-            }
-        }));
-    } else if _args.unit_response.unwrap_or_default() {
-        impl_input.0.items.push(syn::ImplItem::Verbatim(quote! {
-            type Response = ();
-            
-            fn deserialize(&self, _response: ::api_builder::Response<::api_builder::Bytes>) -> Result<Self::Response, ::api_builder::error::BodyError> {
-                Ok(())
+                Self::Response::decode(response.body().clone()).map_err(|_| api_builder::error::BodyError::Deserialize)
             }
         }));
     }
 
-    let response = _args.response
-        .map(|r| quote! {
-            type Response = #r;
-        });
-    add_impl_input!(impl_input, response);
 
     // Return the input
     let inner_impl = impl_input.0;
@@ -188,8 +163,8 @@ pub fn api_rest_client(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let base = _args.base
         .map(|b| quote! {
-            fn rest_endpoint(&self, path: &str) -> Result<::api_builder::Url, api_builder::error::APIError<Self::Error>> {
-                let url = ::api_builder::Url::parse(#b).unwrap();
+            fn rest_endpoint(&self, path: &str) -> Result<api_builder::Url, api_builder::error::APIError<Self::Error>> {
+                let url = api_builder::Url::parse(#b).unwrap();
                 Ok(url.join(path).unwrap())
             }
         });
@@ -209,7 +184,7 @@ pub fn derive_reqwest_client(input: TokenStream) -> TokenStream {
 
     // Return the input
     TokenStream::from(quote! {
-        impl ::api_builder::client::ReqwestClient for #name {
+        impl api_builder::client::ReqwestClient for #name {
             fn client(&self) -> &::reqwest::blocking::Client {
                 &self.client
             }
@@ -226,7 +201,7 @@ pub fn derive_reqwest_async_client(input: TokenStream) -> TokenStream {
 
     // Return the input
     TokenStream::from(quote! {
-        impl ::api_builder::client::ReqwestAsyncClient for #name {
+        impl api_builder::client::ReqwestAsyncClient for #name {
             fn client(&self) -> &::reqwest::Client {
                 &self.async_client
             }

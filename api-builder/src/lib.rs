@@ -1,12 +1,13 @@
-use std::{borrow::Cow, ops::{Deref, DerefMut}};
+// #![feature(async_fn_in_trait)]
 
-// Dependencies
-use error::APIError;
+use std::{borrow::Cow, ops::{Deref, DerefMut}};
 
 // Imports
 pub mod client;
 pub mod error;
 pub mod query;
+#[cfg(feature = "prost")]
+pub mod prost;
 
 // Export
 #[cfg(feature = "derive")]
@@ -16,6 +17,7 @@ pub use query::*;
 
 // Re-exports
 pub use http::{HeaderMap, Method, request::Builder as RequestBuilder, StatusCode, Response};
+use serde::de::DeserializeOwned;
 pub use url::Url;
 pub use bytes::Bytes;
 pub use async_trait::async_trait;
@@ -26,7 +28,7 @@ pub use async_trait::async_trait;
 macro_rules! headermap {
     ($(($key:expr,  $value:expr)),*) => {
         {
-            let mut map = ::api_builder::HeaderMap::new();
+            let mut map = ::http::HeaderMap::new();
             $(
                 map.insert($key, $value.parse().unwrap());
             )*
@@ -41,7 +43,7 @@ macro_rules! headermap {
 macro_rules! headermap_checked {
     ($(($key:expr,  $value:expr)),*) => {
         {
-            let mut map = ::api_builder::HeaderMap::new();
+            let mut map = ::http::HeaderMap::new();
             $(
                 map.insert($key, $value.parse()?);
             )*
@@ -79,6 +81,10 @@ impl<K: Into<Cow<'static, str>>, V: Into<Cow<'static, str>>> From<(K, V)> for Qu
 #[derive(Clone, Eq, PartialEq, Hash, Debug, Default)]
 pub struct QueryParamPairs(pub Vec<QueryParamPair>);
 impl QueryParamPairs {
+    pub fn append<T: Into<QueryParamPairs>>(&mut self, other: T) {
+        self.0.append(&mut other.into());
+    }
+
     pub fn push<T: Into<QueryParamPair>>(&mut self, value: T) {
         self.0.push(value.into());
     }
@@ -115,17 +121,9 @@ impl<K: Into<Cow<'static, str>>, V: Into<Cow<'static, str>>> From<Vec<(K, V)>> f
 
 /// A trait for providing the necessary information for a single REST API endpoint
 pub trait Endpoint {
-    /// The response type for the endpoint.
-    type Response;
-
-    /// Whether to ignore errors from response.
+    /// Ignores any errors returned by the API.
     fn ignore_errors(&self) -> bool {
         false
-    }
-
-    /// Maps a response to an error.
-    fn map_error<C: RestClient>(&self, response: http::Response<Bytes>) -> APIError<C::Error> {
-        APIError::Response(response)
     }
 
     /// The method for the endpoint.
@@ -170,102 +168,203 @@ pub trait Endpoint {
     }
 
     /// Deserialize the response bytes.
-    fn deserialize(&self, response: http::Response<Bytes>) -> Result<Self::Response, error::BodyError>;
+    /// 
+    /// Defaults to using `serde_json::from_slice`.
+    fn deserialize<T: serde::de::DeserializeOwned>(&self, response: http::Response<Bytes>) -> Result<T, error::BodyError> {
+        Ok(serde_json::from_slice(&response.body())?)
+    }
+}
+
+/// A helper trait for implementing `Query` for sync clients.
+/// 
+/// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
+#[macro_export]
+macro_rules! impl_query {
+    ("request") => {
+        fn request(
+            &self,
+            client: &C,
+        ) -> Result<::http::request::Builder, $crate::error::APIError<C::Error>> {
+            let method = self.method();
+            let url = client.rest_endpoint(&self.url())?;
+            let request = http::Request::builder().method(method).uri(url.to_string());
+            if let Some(headers) = self.headers()? {
+                let mut request = request;
+                let headers_mut = request.headers_mut();
+                if let Some(headers_mut) = headers_mut {
+                    headers_mut.extend(headers);
+                } else {
+                    for (key, value) in headers {
+                        request = request.header(
+                            key.ok_or($crate::error::APIError::MissingHeaderName)?,
+                            value,
+                        );
+                    }
+                };
+                Ok(request)
+            } else {
+                Ok(request)
+            }
+        }
+    };
+    ("send") => {
+        fn send(
+            &self,
+            client: &C,
+            request: ::http::request::Builder,
+        ) -> Result<::http::Response<::bytes::Bytes>, $crate::error::APIError<C::Error>> {
+            if let Some((mime, body)) = self.body()? {
+                client.rest(
+                    request
+                        .header(::http::header::CONTENT_TYPE, mime)
+                        .body(body)?,
+                )
+            } else {
+                client.rest(request.body(Vec::new())?)
+            }
+        }
+    };
+    ("finalise") => {
+        fn finalise(
+            &self,
+            response: ::http::Response<::bytes::Bytes>,
+        ) -> Result<T, $crate::error::APIError<C::Error>> {
+            if !response.status().is_success() && !self.ignore_errors() {
+                Err($crate::error::APIError::Response(response))?
+            } else {
+                Ok(self.deserialize(response)?)
+            }
+        }
+    };
+    ("query") => {
+        fn query(&self, client: &C) -> Result<T, $crate::error::APIError<C::Error>> {
+            $crate::query::Query::<T, C>::finalise(
+                self,
+                $crate::query::Query::<T, C>::send(
+                    self,
+                    client,
+                    $crate::query::Query::<T, C>::request(self, client)?,
+                )?,
+            )
+        }
+    }
+}
+
+/// A helper trait for implementing `Query` for async clients.
+/// 
+/// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
+#[macro_export]
+macro_rules! impl_query_async {
+    ("request") => {
+        async fn request_async(
+            &self,
+            client: &C,
+        ) -> Result<::http::request::Builder, $crate::error::APIError<C::Error>> {
+            let method = self.method();
+            let url = client.rest_endpoint(&self.url())?;
+            let request = http::Request::builder().method(method).uri(url.to_string());
+            if let Some(headers) = self.headers()? {
+                let mut request = request;
+                let headers_mut = request.headers_mut();
+                if let Some(headers_mut) = headers_mut {
+                    headers_mut.extend(headers);
+                } else {
+                    for (key, value) in headers {
+                        request = request.header(
+                            key.ok_or($crate::error::APIError::MissingHeaderName)?,
+                            value,
+                        );
+                    }
+                };
+                Ok(request)
+            } else {
+                Ok(request)
+            }
+        }
+    };
+    ("send") => {
+        async fn send_async(
+            &self,
+            client: &C,
+            request: ::http::request::Builder,
+        ) -> Result<::http::Response<::bytes::Bytes>, $crate::error::APIError<C::Error>> {
+            if let Some((mime, body)) = self.body()? {
+                client.rest_async(
+                    request
+                        .header(::http::header::CONTENT_TYPE, mime)
+                        .body(body)?,
+                ).await
+            } else {
+                client.rest_async(
+                    request
+                        .body(Vec::new())?
+                ).await
+            }
+        }
+    };
+    ("finalise") => {
+        async fn finalise_async(
+            &self,
+            response: ::http::Response<::bytes::Bytes>,
+        ) -> Result<T, $crate::error::APIError<C::Error>> {
+            if !response.status().is_success() && !self.ignore_errors() {
+                Err($crate::error::APIError::Response(response))?
+            } else {
+                Ok(self.deserialize(response)?)
+            }
+        }
+    };
+    ("query") => {
+        async fn query_async(&self, client: &C) -> Result<T, $crate::error::APIError<C::Error>> {
+            $crate::query::AsyncQuery::<T, C>::finalise_async(
+                self,
+                $crate::query::AsyncQuery::<T, C>::send_async(
+                    self,
+                    client,
+                    $crate::query::AsyncQuery::<T, C>::request_async(self, client).await?,
+                ).await?,
+            ).await
+        }
+    }
 }
 
 impl<E, T, C> query::Query<T, C> for E
 where
-    E: Endpoint<Response = T>,
+    E: Endpoint,
+    T: DeserializeOwned,
     C: client::Client,
 {
-    fn request(&self, client: &C) -> Result<http::request::Builder, APIError<C::Error>> {
-        // Build the URL
-        let method = self.method();
-        let url = client.rest_endpoint(&self.url())?;
-
-        // Build the request
-        let request = http::Request::builder()
-            .method(method)
-            .uri(url.to_string());
-
-        // Add the headers
-        if let Some(headers) = self.headers()? {
-            let mut request = request;
-            let headers_mut = request.headers_mut();
-
-            if let Some(headers_mut) = headers_mut {
-                headers_mut.extend(headers);
-            } else {
-                for (key, value) in headers {
-                    request = request.header(key.ok_or(APIError::MissingHeaderName)?, value);
-                }
-            };
-            Ok(request)
-        } else {
-            Ok(request)
-        }
-    }
-
-    fn send(&self, client: &C, request: http::request::Builder) -> Result<http::Response<Bytes>, APIError<C::Error>> {
-        if let Some((encoding, body)) = self.body()? {
-            client.rest(
-                request
-                    .header(http::header::CONTENT_TYPE, encoding)
-                    .body(body)?
-            )
-        } else {
-            client.rest(
-                request
-                    .body(vec![])?
-            )
-        }
-    }
-
-    fn finalise(&self, response: http::Response<Bytes>) -> Result<T, APIError<C::Error>> {
-        if !response.status().is_success() && !self.ignore_errors() {
-            Err(self.map_error::<C>(response))?
-        } else {
-            // Deserialize the response
-            Ok(self.deserialize(response).or(Err(APIError::Body(error::BodyError::Deserialize)))?)
-        }
-    }
-
-    fn query(&self, client: &C) -> Result<T, APIError<C::Error>> {
-        query::Query::<T, C>::finalise(self,
-            self.send(
-                client,
-                self.request(client)?
-            )?
-        )
-    }
+    impl_query!("request");
+    impl_query!("send");
+    impl_query!("finalise");
+    impl_query!("query");
 }
 
 #[async_trait]
-impl<'a, E, T, C> AsyncQuery<T, C> for E
+impl<E, T, C> query::AsyncQuery<T, C> for E
 where
-    E: Endpoint<Response = T> + Sync,
-    C: AsyncClient + Sync,
+    E: Endpoint + Sync,
+    T: DeserializeOwned,
+    C: client::AsyncClient + Sync,
 {
-    async fn request_async(&self, client: &C) -> Result<http::request::Builder, APIError<C::Error>> {
-        // Build the URL
+    async fn request_async(
+        &self,
+        client: &C,
+    ) -> Result<::http::request::Builder, crate::error::APIError<C::Error>> {
         let method = self.method();
         let url = client.rest_endpoint(&self.url())?;
-
-        // Build the request
-        let request = http::Request::builder()
-            .method(method)
-            .uri(url.to_string());
-
-        // Add the headers
+        let request = http::Request::builder().method(method).uri(url.to_string());
         if let Some(headers) = self.headers()? {
             let mut request = request;
             let headers_mut = request.headers_mut();
-
             if let Some(headers_mut) = headers_mut {
                 headers_mut.extend(headers);
             } else {
                 for (key, value) in headers {
-                    request = request.header(key.ok_or(APIError::MissingHeaderName)?, value);
+                    request = request.header(
+                        key.ok_or(crate::error::APIError::MissingHeaderName)?,
+                        value,
+                    );
                 }
             };
             Ok(request)
@@ -274,36 +373,44 @@ where
         }
     }
 
-    async fn send_async(&self, client: &C, request: http::request::Builder) -> Result<http::Response<Bytes>, APIError<C::Error>> {
-        if let Some((encoding, body)) = self.body()? {
-            client.rest_async(
-                request
-                    .header(http::header::CONTENT_TYPE, encoding)
-                    .body(body)?
-            ).await
+    async fn send_async(
+        &self,
+        client: &C,
+        request: ::http::request::Builder,
+    ) -> Result<::http::Response<::bytes::Bytes>, crate::error::APIError<C::Error>> {
+        if let Some((mime, body)) = self.body()? {
+            client
+                .rest_async(
+                    request
+                        .header(::http::header::CONTENT_TYPE, mime)
+                        .body(body)?,
+                )
+                .await
         } else {
-            client.rest_async(
-                request
-                    .body(vec![])?
-            ).await
+            client.rest_async(request.body(Vec::new())?).await
         }
     }
 
-    async fn finalise_async(&self, response: http::Response<Bytes>) -> Result<T, APIError<C::Error>> {
+    async fn finalise_async(
+        &self,
+        response: ::http::Response<::bytes::Bytes>,
+    ) -> Result<T, crate::error::APIError<C::Error>> {
         if !response.status().is_success() && !self.ignore_errors() {
-            Err(self.map_error::<C>(response))?
+            Err(crate::error::APIError::Response(response))?
         } else {
-            // Deserialize the response
-            Ok(self.deserialize(response).or(Err(APIError::Body(error::BodyError::Deserialize)))?)
+            Ok(self.deserialize(response)?)
         }
     }
-    
-    async fn query_async(&self, client: &C) -> Result<T, APIError<C::Error>> {
-        query::AsyncQuery::<T, C>::finalise_async(self,
-            self.send_async(
+
+    async fn query_async(&self, client: &C) -> Result<T, crate::error::APIError<C::Error>> {
+        crate::query::AsyncQuery::<T, C>::finalise_async(
+            self,
+            crate::query::AsyncQuery::<T, C>::send_async(
+                self,
                 client,
-                self.request_async(client).await?
-            ).await?
+                crate::query::AsyncQuery::<T, C>::request_async(self, client).await?,
+            )
+            .await?,
         ).await
     }
 }

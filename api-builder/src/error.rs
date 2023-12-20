@@ -50,7 +50,7 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     /// URL parsing failed.
     #[error("failed to parse URL")]
     URL(#[from] url::ParseError),
-    /// There was an error from the payload.
+    /// There was an unknown error.
     #[error(transparent)]
-    Payload(anyhow::Error)
+    Other(anyhow::Error)
 }

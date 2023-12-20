@@ -11,7 +11,7 @@ struct Payload {
     id: String,
     test: String
 }
-#[api_builder_derive::api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json", serde_json = true, response = "Response")]
+#[api_builder_derive::api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json")]
 impl Endpoint for Payload {}
 
 fn main() { }

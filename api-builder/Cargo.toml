@@ -31,8 +31,10 @@ thiserror = "1.0"
 url = "2.4"
 api_builder_derive = { path = "../api-builder-derive", optional = true }
 anyhow = "1.0"
+prost = { version = "0.12", optional = true }
 
 [features]
-default = ["reqwest", "derive"]
+default = ["reqwest", "derive", "prost"]
 reqwest = ["dep:reqwest"]
 derive = ["dep:api_builder_derive"]
+prost = ["dep:prost"]

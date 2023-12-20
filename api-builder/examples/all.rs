@@ -35,17 +35,20 @@ struct Payload {
 }
 
 // Automatically implements `Endpoint` for `Payload`.
-#[api_builder_derive::api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json", serde_json = true, response = "Response")]
+#[api_builder_derive::api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json")]
 impl Endpoint for Payload {}
 
 // Add additional methods to the resource.
 impl Payload {
     /// A wrapper around the `query` method that can be modified to add custom logic, should be an in-place replacement for `query`.
-    pub fn final_query<C: api_builder::Client>(&self, client: &C) -> Result<<Self as Endpoint>::Response, api_builder::error::APIError<C::Error>> {
-        api_builder::query::Query::<<Self as Endpoint>::Response, C>::finalise(self,
-            self.send(
+    /// 
+    /// You could also create a combinator.
+    pub fn final_query<C: api_builder::Client>(&self, client: &C) -> Result<Response, api_builder::error::APIError<C::Error>> {
+        api_builder::query::Query::<Response, C>::finalise(self,
+            api_builder::query::Query::<Response, C>::send(
+                self,
                 client,
-                self.request(client)?
+                api_builder::query::Query::<Response, C>::request(self, client)?
             )?
         )
     }
@@ -60,5 +63,5 @@ fn main() {
     };
 
     let _response = payload.final_query(&client).unwrap();
-    let _response = payload.query(&client).unwrap();
+    let _response: Response = payload.query(&client).unwrap();
 }
