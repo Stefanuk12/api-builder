@@ -16,7 +16,7 @@ pub use client::*;
 pub use query::*;
 
 // Re-exports
-pub use http::{HeaderMap, Method, request::Builder as RequestBuilder, StatusCode, Response};
+pub use http::{HeaderMap, Method, Request, request::Builder as RequestBuilder, StatusCode, Response};
 use serde::de::DeserializeOwned;
 pub use url::Url;
 pub use bytes::Bytes;
@@ -184,10 +184,10 @@ macro_rules! impl_query {
         fn request(
             &self,
             client: &C,
-        ) -> Result<::http::request::Builder, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
-            let request = http::Request::builder().method(method).uri(url.to_string());
+            let request = $crate::Request::builder().method(method).uri(url.to_string());
             if let Some(headers) = self.headers()? {
                 let mut request = request;
                 let headers_mut = request.headers_mut();
@@ -211,8 +211,8 @@ macro_rules! impl_query {
         fn send(
             &self,
             client: &C,
-            request: ::http::request::Builder,
-        ) -> Result<::http::Response<::bytes::Bytes>, $crate::error::APIError<C::Error>> {
+            request: $crate::RequestBuilder,
+        ) -> Result<$crate::Response<$crate::Bytes>, $crate::error::APIError<C::Error>> {
             if let Some((mime, body)) = self.body()? {
                 client.rest(
                     request
@@ -227,7 +227,7 @@ macro_rules! impl_query {
     ("finalise") => {
         fn finalise(
             &self,
-            response: ::http::Response<::bytes::Bytes>,
+            response: $crate::Response<$crate::Bytes>,
         ) -> Result<T, $crate::error::APIError<C::Error>> {
             if !response.status().is_success() && !self.ignore_errors() {
                 Err($crate::error::APIError::Response(response))?
@@ -259,7 +259,7 @@ macro_rules! impl_query_async {
         async fn request_async(
             &self,
             client: &C,
-        ) -> Result<::http::request::Builder, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
             let request = http::Request::builder().method(method).uri(url.to_string());
@@ -286,8 +286,8 @@ macro_rules! impl_query_async {
         async fn send_async(
             &self,
             client: &C,
-            request: ::http::request::Builder,
-        ) -> Result<::http::Response<::bytes::Bytes>, $crate::error::APIError<C::Error>> {
+            request: $crate::RequestBuilder,
+        ) -> Result<$crate::Response<$crate::Bytes>, $crate::error::APIError<C::Error>> {
             if let Some((mime, body)) = self.body()? {
                 client.rest_async(
                     request
@@ -305,7 +305,7 @@ macro_rules! impl_query_async {
     ("finalise") => {
         async fn finalise_async(
             &self,
-            response: ::http::Response<::bytes::Bytes>,
+            response: $crate::Response<$crate::Bytes>,
         ) -> Result<T, $crate::error::APIError<C::Error>> {
             if !response.status().is_success() && !self.ignore_errors() {
                 Err($crate::error::APIError::Response(response))?
@@ -350,7 +350,7 @@ where
     async fn request_async(
         &self,
         client: &C,
-    ) -> Result<::http::request::Builder, crate::error::APIError<C::Error>> {
+    ) -> Result<crate::RequestBuilder, crate::error::APIError<C::Error>> {
         let method = self.method();
         let url = client.rest_endpoint(&self.url())?;
         let request = http::Request::builder().method(method).uri(url.to_string());
@@ -376,8 +376,8 @@ where
     async fn send_async(
         &self,
         client: &C,
-        request: ::http::request::Builder,
-    ) -> Result<::http::Response<::bytes::Bytes>, crate::error::APIError<C::Error>> {
+        request: crate::RequestBuilder,
+    ) -> Result<crate::Response<crate::Bytes>, crate::error::APIError<C::Error>> {
         if let Some((mime, body)) = self.body()? {
             client
                 .rest_async(
@@ -393,7 +393,7 @@ where
 
     async fn finalise_async(
         &self,
-        response: ::http::Response<::bytes::Bytes>,
+        response: crate::Response<crate::Bytes>,
     ) -> Result<T, crate::error::APIError<C::Error>> {
         if !response.status().is_success() && !self.ignore_errors() {
             Err(crate::error::APIError::Response(response))?
