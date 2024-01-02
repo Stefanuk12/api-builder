@@ -1,5 +1,4 @@
 // Dependencies
-use async_trait::async_trait;
 use bytes::Bytes;
 use crate::{client::AsyncClient, error::APIError};
 
@@ -22,20 +21,19 @@ where
 }
 
 /// A trait which represents an asynchronous query which may be made to a client.
-#[async_trait]
 pub trait AsyncQuery<T, C>
 where
     C: AsyncClient,
 {
     /// Starts building the query request.
-    async fn request_async(&self, client: &C) -> Result<http::request::Builder, APIError<C::Error>>;
+    fn request_async(&self, client: &C) -> impl std::future::Future<Output = Result<http::request::Builder, APIError<C::Error>>> + Send;
 
     /// Sends the request.
-    async fn send_async(&self, client: &C, request: http::request::Builder) -> Result<http::Response<Bytes>, APIError<C::Error>>;
+    fn send_async(&self, client: &C, request: http::request::Builder) -> impl std::future::Future<Output = Result<http::Response<Bytes>, APIError<C::Error>>> + Send;
 
     /// Finalises the request by returning the response.
-    async fn finalise_async(&self, response: http::Response<Bytes>) -> Result<T, APIError<C::Error>>;
+    fn finalise_async(&self, response: http::Response<Bytes>) -> impl std::future::Future<Output = Result<T, APIError<C::Error>>> + Send;
 
     /// Perform the query asynchronously against the client.
-    async fn query_async(&self, client: &C) -> Result<T, APIError<C::Error>>;
+    fn query_async(&self, client: &C) -> impl std::future::Future<Output = Result<T, APIError<C::Error>>> + Send;
 }

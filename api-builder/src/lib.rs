@@ -20,7 +20,6 @@ pub use http::{HeaderMap, Method, Request, request::Builder as RequestBuilder, S
 use serde::de::DeserializeOwned;
 pub use url::Url;
 pub use bytes::Bytes;
-pub use async_trait::async_trait;
 
 /// A macro that is similar to `vec!` but for `http::HeaderMap`s.
 /// This does not check for invalid headers.
@@ -340,77 +339,14 @@ where
     impl_query!("query");
 }
 
-#[async_trait]
 impl<E, T, C> query::AsyncQuery<T, C> for E
 where
     E: Endpoint + Sync,
     T: DeserializeOwned,
     C: client::AsyncClient + Sync,
 {
-    async fn request_async(
-        &self,
-        client: &C,
-    ) -> Result<crate::RequestBuilder, crate::error::APIError<C::Error>> {
-        let method = self.method();
-        let url = client.rest_endpoint(&self.url())?;
-        let request = http::Request::builder().method(method).uri(url.to_string());
-        if let Some(headers) = self.headers()? {
-            let mut request = request;
-            let headers_mut = request.headers_mut();
-            if let Some(headers_mut) = headers_mut {
-                headers_mut.extend(headers);
-            } else {
-                for (key, value) in headers {
-                    request = request.header(
-                        key.ok_or(crate::error::APIError::MissingHeaderName)?,
-                        value,
-                    );
-                }
-            };
-            Ok(request)
-        } else {
-            Ok(request)
-        }
-    }
-
-    async fn send_async(
-        &self,
-        client: &C,
-        request: crate::RequestBuilder,
-    ) -> Result<crate::Response<crate::Bytes>, crate::error::APIError<C::Error>> {
-        if let Some((mime, body)) = self.body()? {
-            client
-                .rest_async(
-                    request
-                        .header(::http::header::CONTENT_TYPE, mime)
-                        .body(body)?,
-                )
-                .await
-        } else {
-            client.rest_async(request.body(Vec::new())?).await
-        }
-    }
-
-    async fn finalise_async(
-        &self,
-        response: crate::Response<crate::Bytes>,
-    ) -> Result<T, crate::error::APIError<C::Error>> {
-        if !response.status().is_success() && !self.ignore_errors() {
-            Err(crate::error::APIError::Response(response))?
-        } else {
-            Ok(self.deserialize(response)?)
-        }
-    }
-
-    async fn query_async(&self, client: &C) -> Result<T, crate::error::APIError<C::Error>> {
-        crate::query::AsyncQuery::<T, C>::finalise_async(
-            self,
-            crate::query::AsyncQuery::<T, C>::send_async(
-                self,
-                client,
-                crate::query::AsyncQuery::<T, C>::request_async(self, client).await?,
-            )
-            .await?,
-        ).await
-    }
+    impl_query_async!("request");
+    impl_query_async!("send");
+    impl_query_async!("finalise");
+    impl_query_async!("query"); 
 }

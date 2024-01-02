@@ -1,6 +1,5 @@
 // Dependencies
 use bytes::Bytes;
-use async_trait::async_trait;
 use http::{request::Builder, Response};
 use crate::error::APIError;
 
@@ -73,17 +72,15 @@ where
 }
 
 /// A trait representing an asynchronous client.
-#[async_trait]
 pub trait AsyncClient: RestClient {
     /// Send a REST query asynchronously.
-    async fn rest_async(
+    fn rest_async(
         &self,
         request: http::Request<Vec<u8>> 
-    ) -> Result<Response<Bytes>, APIError<Self::Error>>;
+    ) -> impl std::future::Future<Output = Result<Response<Bytes>, APIError<Self::Error>>> + Send;
 }
 
 #[cfg(feature = "reqwest")]
-#[async_trait]
 impl<C> AsyncClient for C
 where
     C: RestClient + ReqwestAsyncClient + Sync
