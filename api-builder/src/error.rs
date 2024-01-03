@@ -52,5 +52,5 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     URL(#[from] url::ParseError),
     /// There was an unknown error.
     #[error(transparent)]
-    Other(anyhow::Error)
+    Other(#[from] anyhow::Error)
 }
