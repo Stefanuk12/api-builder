@@ -1,10 +1,12 @@
 use bytes::Bytes;
 use prost::Message;
 
-use crate::{Endpoint, Client, Query, error::APIError, impl_query, AsyncQuery, AsyncClient, impl_query_async};
+use crate::{
+    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+};
 
 pub struct Prost<E> {
-    endpoint: E
+    endpoint: E,
 }
 impl<E> std::ops::Deref for Prost<E> {
     type Target = E;
@@ -28,7 +30,8 @@ where
             Err(APIError::Response(response))?
         } else {
             // Deserialize the response
-            Ok(T::decode(response.body().clone()).map_err(|_| APIError::Body(crate::error::BodyError::Deserialize))?)
+            Ok(T::decode(response.body().clone())
+                .map_err(|_| APIError::Body(crate::error::BodyError::Deserialize))?)
         }
     }
 }
@@ -51,7 +54,8 @@ where
             Err(APIError::Response(response))?
         } else {
             // Deserialize the response
-            Ok(T::decode(response.body().clone()).map_err(|_| APIError::Body(crate::error::BodyError::Deserialize))?)
+            Ok(T::decode(response.body().clone())
+                .map_err(|_| APIError::Body(crate::error::BodyError::Deserialize))?)
         }
     }
 }

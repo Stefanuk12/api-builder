@@ -1,8 +1,11 @@
 // Dependencies
-use darling::{FromMeta, ast::NestedMeta};
-use proc_macro::{TokenStream, Span};
-use syn::{parse::{ParseStream, Error}, Attribute, Token, ItemImpl, parse_macro_input, Ident};
+use darling::{ast::NestedMeta, FromMeta};
+use proc_macro::{Span, TokenStream};
 use quote::quote;
+use syn::{
+    parse::{Error, ParseStream},
+    parse_macro_input, Attribute, Ident, ItemImpl, Token,
+};
 
 /// All of the arguments that can be passed to the `api_endpoint` macro.
 #[derive(Debug, FromMeta)]
@@ -38,7 +41,10 @@ impl syn::parse::Parse for ParseItemImpl {
         if lookahead.peek(Token![impl]) {
             let mut item: ItemImpl = input.parse()?;
             if item.trait_.is_none() {
-                return Err(Error::new(Span::call_site().into(), "expected a trait impl"));
+                return Err(Error::new(
+                    Span::call_site().into(),
+                    "expected a trait impl",
+                ));
             }
             item.attrs = attrs;
             Ok(Self(item))
@@ -54,7 +60,7 @@ macro_rules! add_impl_input {
         if let Some(item) = $item {
             $input.0.items.push(syn::ImplItem::Verbatim(item));
         }
-    }
+    };
 }
 
 /// Add some methods to your impl block.
@@ -63,52 +69,57 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input
     let attr_args = match NestedMeta::parse_meta_list(args.into()) {
         Ok(v) => v,
-        Err(e) => { return TokenStream::from(darling::Error::from(e).write_errors()); }
+        Err(e) => {
+            return TokenStream::from(darling::Error::from(e).write_errors());
+        }
     };
     let _args = match APIEndpointArgs::from_list(&attr_args) {
         Ok(v) => v,
-        Err(e) => { return TokenStream::from(e.write_errors()); }
+        Err(e) => {
+            return TokenStream::from(e.write_errors());
+        }
     };
     let mut impl_input = parse_macro_input!(input as ParseItemImpl);
-    
+
     // The implementation for each
-    let method = _args.method
-        .map(|m| quote! {
+    let method = _args.method.map(|m| {
+        quote! {
             fn method(&self) -> api_builder::Method {
                 api_builder::Method::#m
             }
-        });
+        }
+    });
     add_impl_input!(impl_input, method);
 
-    let ignore_errors = _args.ignore_errors
-        .map(|e| quote! {
+    let ignore_errors = _args.ignore_errors.map(|e| {
+        quote! {
             fn ignore_errors(&self) -> bool {
                 #e
             }
-        });
+        }
+    });
     add_impl_input!(impl_input, ignore_errors);
 
-    let path = _args.path
-        .map(|p| {
-            // Check if it's a string literal
-            if let syn::Expr::Lit(lit) = &p {
-                if let syn::Lit::Str(s) = &lit.lit {
-                    return quote! {
-                        fn path(&self) -> ::std::borrow::Cow<'static, str> {
-                            ::std::borrow::Cow::Borrowed(#s)
-                        }
+    let path = _args.path.map(|p| {
+        // Check if it's a string literal
+        if let syn::Expr::Lit(lit) = &p {
+            if let syn::Lit::Str(s) = &lit.lit {
+                return quote! {
+                    fn path(&self) -> ::std::borrow::Cow<'static, str> {
+                        ::std::borrow::Cow::Borrowed(#s)
                     }
-                }
+                };
             }
+        }
 
-            // Additonal checks could be added like checking for constants or something...
+        // Additonal checks could be added like checking for constants or something...
 
-            return quote! {
-                fn path(&self) -> ::std::borrow::Cow<'static, str> {
-                    ::std::borrow::Cow::Owned(#p)
-                }
+        return quote! {
+            fn path(&self) -> ::std::borrow::Cow<'static, str> {
+                ::std::borrow::Cow::Owned(#p)
             }
-        });
+        };
+    });
     add_impl_input!(impl_input, path);
 
     let body = _args.self_as_body
@@ -134,7 +145,6 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
         }));
     }
 
-
     // Return the input
     let inner_impl = impl_input.0;
     TokenStream::from(quote!(#inner_impl))
@@ -146,19 +156,24 @@ pub fn api_rest_client(args: TokenStream, input: TokenStream) -> TokenStream {
     // Parse the input
     let attr_args = match NestedMeta::parse_meta_list(args.into()) {
         Ok(v) => v,
-        Err(e) => { return TokenStream::from(darling::Error::from(e).write_errors()); }
+        Err(e) => {
+            return TokenStream::from(darling::Error::from(e).write_errors());
+        }
     };
     let _args = match APIRestClientArgs::from_list(&attr_args) {
         Ok(v) => v,
-        Err(e) => { return TokenStream::from(e.write_errors()); }
+        Err(e) => {
+            return TokenStream::from(e.write_errors());
+        }
     };
     let mut impl_input = parse_macro_input!(input as ParseItemImpl);
-    
+
     // The implementation for each
-    let error = _args.error
-        .map(|e| quote! {
+    let error = _args.error.map(|e| {
+        quote! {
             type Error = #e;
-        });
+        }
+    });
     add_impl_input!(impl_input, error);
 
     let base = _args.base

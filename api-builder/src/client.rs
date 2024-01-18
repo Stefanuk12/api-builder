@@ -1,7 +1,7 @@
 // Dependencies
+use crate::error::APIError;
 use bytes::Bytes;
 use http::{request::Builder, Response};
-use crate::error::APIError;
 
 /// A trait representing a client which can communicate with an instance via REST.
 pub trait RestClient {
@@ -39,18 +39,18 @@ pub trait Client: RestClient {
     /// Send a REST query.
     fn rest(
         &self,
-        request: http::Request<Vec<u8>> 
+        request: http::Request<Vec<u8>>,
     ) -> Result<Response<Bytes>, APIError<Self::Error>>;
 }
 
 #[cfg(feature = "reqwest")]
 impl<C> Client for C
 where
-    C: RestClient + ReqwestClient
+    C: RestClient + ReqwestClient,
 {
     fn rest(
         &self,
-        request: http::Request<Vec<u8>>
+        request: http::Request<Vec<u8>>,
     ) -> Result<Response<Bytes>, APIError<Self::Error>> {
         // Send the request
         let response = self.client().execute(request.try_into()?)?;
@@ -76,18 +76,18 @@ pub trait AsyncClient: RestClient {
     /// Send a REST query asynchronously.
     fn rest_async(
         &self,
-        request: http::Request<Vec<u8>> 
+        request: http::Request<Vec<u8>>,
     ) -> impl std::future::Future<Output = Result<Response<Bytes>, APIError<Self::Error>>> + Send;
 }
 
 #[cfg(feature = "reqwest")]
 impl<C> AsyncClient for C
 where
-    C: RestClient + ReqwestAsyncClient + Sync
+    C: RestClient + ReqwestAsyncClient + Sync,
 {
     async fn rest_async(
         &self,
-        request: http::Request<Vec<u8>>
+        request: http::Request<Vec<u8>>,
     ) -> Result<Response<Bytes>, APIError<Self::Error>> {
         // Send the request
         let response = self.client().execute(request.try_into()?).await?;

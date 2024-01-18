@@ -9,6 +9,6 @@ pub struct Client {
     async_client: reqwest::Client,
 }
 #[api_builder::api_rest_client(error = APIError, base = "\"https://example.com/v1/\"")]
-impl api_builder::client::RestClient for Client { }
+impl api_builder::client::RestClient for Client {}
 
-fn main() { }
+fn main() {}

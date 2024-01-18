@@ -1,13 +1,16 @@
 // #![feature(async_fn_in_trait)]
 
-use std::{borrow::Cow, ops::{Deref, DerefMut}};
+use std::{
+    borrow::Cow,
+    ops::{Deref, DerefMut},
+};
 
 // Imports
 pub mod client;
 pub mod error;
-pub mod query;
 #[cfg(feature = "prost")]
 pub mod prost;
+pub mod query;
 
 // Export
 #[cfg(feature = "derive")]
@@ -16,10 +19,12 @@ pub use client::*;
 pub use query::*;
 
 // Re-exports
-pub use http::{HeaderMap, Method, Request, request::Builder as RequestBuilder, StatusCode, Response};
+pub use bytes::Bytes;
+pub use http::{
+    request::Builder as RequestBuilder, HeaderMap, Method, Request, Response, StatusCode,
+};
 use serde::de::DeserializeOwned;
 pub use url::Url;
-pub use bytes::Bytes;
 
 /// A macro that is similar to `vec!` but for `http::HeaderMap`s.
 /// This does not check for invalid headers.
@@ -88,7 +93,11 @@ impl QueryParamPairs {
         self.0.push(value.into());
     }
 
-    pub fn push_hashmap<K: Into<Cow<'static, str>>, V: Into<Cow<'static, str>>>(&mut self, name: &str, value: std::collections::HashMap<K, V>) {
+    pub fn push_hashmap<K: Into<Cow<'static, str>>, V: Into<Cow<'static, str>>>(
+        &mut self,
+        name: &str,
+        value: std::collections::HashMap<K, V>,
+    ) {
         for (key, value) in value {
             let key: Cow<'_, _> = key.into();
             self.push((format!("{}[{}]", name, key), value));
@@ -160,22 +169,25 @@ pub trait Endpoint {
     }
 
     /// The body for the endpoint.
-    /// 
+    ///
     /// Returns the `Content-Encoding` header for the data as well as the data itself.
     fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, error::BodyError> {
         Ok(None)
     }
 
     /// Deserialize the response bytes.
-    /// 
+    ///
     /// Defaults to using `serde_json::from_slice`.
-    fn deserialize<T: serde::de::DeserializeOwned>(&self, response: http::Response<Bytes>) -> Result<T, error::BodyError> {
+    fn deserialize<T: serde::de::DeserializeOwned>(
+        &self,
+        response: http::Response<Bytes>,
+    ) -> Result<T, error::BodyError> {
         Ok(serde_json::from_slice(&response.body())?)
     }
 }
 
 /// A helper trait for implementing `Query` for sync clients.
-/// 
+///
 /// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
 #[macro_export]
 macro_rules! impl_query {
@@ -186,7 +198,9 @@ macro_rules! impl_query {
         ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
-            let request = $crate::Request::builder().method(method).uri(url.to_string());
+            let request = $crate::Request::builder()
+                .method(method)
+                .uri(url.to_string());
             if let Some(headers) = self.headers()? {
                 let mut request = request;
                 let headers_mut = request.headers_mut();
@@ -246,11 +260,11 @@ macro_rules! impl_query {
                 )?,
             )
         }
-    }
+    };
 }
 
 /// A helper trait for implementing `Query` for async clients.
-/// 
+///
 /// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
 #[macro_export]
 macro_rules! impl_query_async {
@@ -288,16 +302,15 @@ macro_rules! impl_query_async {
             request: $crate::RequestBuilder,
         ) -> Result<$crate::Response<$crate::Bytes>, $crate::error::APIError<C::Error>> {
             if let Some((mime, body)) = self.body()? {
-                client.rest_async(
-                    request
-                        .header(::http::header::CONTENT_TYPE, mime)
-                        .body(body)?,
-                ).await
+                client
+                    .rest_async(
+                        request
+                            .header(::http::header::CONTENT_TYPE, mime)
+                            .body(body)?,
+                    )
+                    .await
             } else {
-                client.rest_async(
-                    request
-                        .body(Vec::new())?
-                ).await
+                client.rest_async(request.body(Vec::new())?).await
             }
         }
     };
@@ -321,10 +334,12 @@ macro_rules! impl_query_async {
                     self,
                     client,
                     $crate::query::AsyncQuery::<T, C>::request_async(self, client).await?,
-                ).await?,
-            ).await
+                )
+                .await?,
+            )
+            .await
         }
-    }
+    };
 }
 
 impl<E, T, C> query::Query<T, C> for E
@@ -348,5 +363,5 @@ where
     impl_query_async!("request");
     impl_query_async!("send");
     impl_query_async!("finalise");
-    impl_query_async!("query"); 
+    impl_query_async!("query");
 }

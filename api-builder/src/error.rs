@@ -10,7 +10,7 @@ pub enum BodyError {
     #[error(transparent)]
     SerdeJson(#[from] serde_json::Error),
     #[error(transparent)]
-    Other(#[from] anyhow::Error)
+    Other(#[from] anyhow::Error),
 }
 
 /// Errors that can occur when adding headers.
@@ -19,7 +19,7 @@ pub enum HeaderError {
     #[error(transparent)]
     Parse(#[from] http::header::InvalidHeaderValue),
     #[error(transparent)]
-    Other(#[from] anyhow::Error)
+    Other(#[from] anyhow::Error),
 }
 
 /// Errors that can occur when using API endpoints.
@@ -52,5 +52,5 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     URL(#[from] url::ParseError),
     /// There was an unknown error.
     #[error(transparent)]
-    Other(#[from] anyhow::Error)
+    Other(#[from] anyhow::Error),
 }
