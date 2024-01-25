@@ -54,3 +54,19 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
+impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
+    pub fn map_err<T: std::error::Error + Send + Sync + 'static + Into<E>>(err: APIError<T>) -> APIError<E> {
+        match err {
+            APIError::Client(e) => APIError::Client(e.into()),
+            APIError::HTTP(e) => APIError::HTTP(e),
+            #[cfg(feature = "reqwest")]
+            APIError::Reqwest(e) => APIError::Reqwest(e),
+            APIError::Body(e) => APIError::Body(e),
+            APIError::Header(e) => APIError::Header(e),
+            APIError::MissingHeaderName => APIError::MissingHeaderName,
+            APIError::Response(e) => APIError::Response(e),
+            APIError::URL(e) => APIError::URL(e),
+            APIError::Other(e) => APIError::Other(e),
+        }
+    }
+}
