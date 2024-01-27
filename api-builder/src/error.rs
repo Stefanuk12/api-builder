@@ -18,6 +18,10 @@ pub enum BodyError {
 pub enum HeaderError {
     #[error(transparent)]
     Parse(#[from] http::header::InvalidHeaderValue),
+    #[error("missing expected header: {0}")]
+    MissingHeader(&'static str),
+    #[error(transparent)]
+    ToStr(#[from] http::header::ToStrError),
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
