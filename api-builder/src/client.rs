@@ -63,7 +63,7 @@ where
         // Add headers
         let headers = http_response.headers_mut().unwrap();
         for (key, value) in response.headers() {
-            headers.insert(key, value.clone());
+            headers.append(key, value.clone());
         }
 
         // Add the body and return the response
@@ -100,7 +100,7 @@ where
         // Add headers
         let headers = http_response.headers_mut().unwrap();
         for (key, value) in response.headers() {
-            headers.insert(key, value.clone());
+            headers.append(key, value.clone());
         }
 
         // Add the body and return the response
