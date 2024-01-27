@@ -73,4 +73,20 @@ impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
             APIError::Other(e) => APIError::Other(e),
         }
     }
+
+    /// Converts `Client` to `Other`.
+    pub fn map_err2<T: std::error::Error + Send + Sync + 'static>(err: APIError<T>) -> APIError<E> {
+        match err {
+            APIError::Client(e) => APIError::Other(e.into()),
+            APIError::HTTP(e) => APIError::HTTP(e),
+            #[cfg(feature = "reqwest")]
+            APIError::Reqwest(e) => APIError::Reqwest(e),
+            APIError::Body(e) => APIError::Body(e),
+            APIError::Header(e) => APIError::Header(e),
+            APIError::MissingHeaderName => APIError::MissingHeaderName,
+            APIError::Response(e) => APIError::Response(e),
+            APIError::URL(e) => APIError::URL(e),
+            APIError::Other(e) => APIError::Other(e),
+        }
+    }
 }
