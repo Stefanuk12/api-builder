@@ -28,7 +28,7 @@ pub trait ReqwestAsyncClient: RestClient {
 }
 
 /// A trait representing a client which includes a blocking reqwest client.
-#[cfg(feature = "reqwest")]
+#[cfg(feature = "reqwest_blocking")]
 pub trait ReqwestClient: RestClient {
     /// Get the blocking reqwest client.
     fn client(&self) -> &reqwest::blocking::Client;
@@ -43,7 +43,7 @@ pub trait Client: RestClient {
     ) -> Result<Response<Bytes>, APIError<Self::Error>>;
 }
 
-#[cfg(feature = "reqwest")]
+#[cfg(feature = "reqwest_blocking")]
 impl<C> Client for C
 where
     C: RestClient + ReqwestClient,

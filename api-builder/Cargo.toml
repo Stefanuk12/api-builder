@@ -23,7 +23,7 @@ categories = [
 [dependencies]
 bytes = "1.5"
 http = "0.2"
-reqwest = { version = "0.11", features = ["blocking"], optional = true }
+reqwest = { version = "0.11", optional = true }
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 thiserror = "1.0"
@@ -33,7 +33,8 @@ anyhow = "1.0"
 prost = { version = "0.12", optional = true }
 
 [features]
-default = ["reqwest", "derive", "prost"]
+default = ["reqwest_blocking", "derive", "prost"]
 reqwest = ["dep:reqwest"]
+reqwest_blocking = ["reqwest", "reqwest/blocking"]
 derive = ["dep:api_builder_derive"]
 prost = ["dep:prost"]
