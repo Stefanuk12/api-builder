@@ -31,10 +31,31 @@ url = "2.4"
 api_builder_derive = { path = "../api-builder-derive", optional = true }
 anyhow = "1.0"
 prost = { version = "0.12", optional = true }
+async-trait = "0.1"
+
+[target.'cfg(target_arch = "wasm32")'.dependencies]
+gloo-net = "0.5"
+js-sys = "0.3"
+web-sys = "0.3"
 
 [features]
-default = ["reqwest_blocking", "derive", "prost"]
+default = ["derive", "prost"]
 reqwest = ["dep:reqwest"]
 reqwest_blocking = ["reqwest", "reqwest/blocking"]
 derive = ["dep:api_builder_derive"]
 prost = ["dep:prost"]
+
+[[example]]
+name = "all"
+path = "examples/all.rs"
+required-features = ["reqwest_blocking"]
+
+[[example]]
+name = "client"
+path = "examples/client.rs"
+required-features = ["derive", "reqwest"]
+
+[[example]]
+name = "endpoint"
+path = "examples/endpoint.rs"
+required-features = ["derive"]

@@ -39,6 +39,10 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     #[cfg(feature = "reqwest")]
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
+    /// There was an error with `gloo-net`.
+    #[cfg(target_arch = "wasm32")]
+    #[error(transparent)]
+    GlooNet(#[from] gloo_net::Error),
     /// There was an error with the body.
     #[error(transparent)]
     Body(#[from] BodyError),
@@ -65,6 +69,8 @@ impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
             APIError::HTTP(e) => APIError::HTTP(e),
             #[cfg(feature = "reqwest")]
             APIError::Reqwest(e) => APIError::Reqwest(e),
+            #[cfg(target_arch = "wasm32")]
+            APIError::GlooNet(e) => APIError::GlooNet(e),
             APIError::Body(e) => APIError::Body(e),
             APIError::Header(e) => APIError::Header(e),
             APIError::MissingHeaderName => APIError::MissingHeaderName,
@@ -81,6 +87,8 @@ impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
             APIError::HTTP(e) => APIError::HTTP(e),
             #[cfg(feature = "reqwest")]
             APIError::Reqwest(e) => APIError::Reqwest(e),
+            #[cfg(target_arch = "wasm32")]
+            APIError::GlooNet(e) => APIError::GlooNet(e),
             APIError::Body(e) => APIError::Body(e),
             APIError::Header(e) => APIError::Header(e),
             APIError::MissingHeaderName => APIError::MissingHeaderName,
