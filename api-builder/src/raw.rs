@@ -2,7 +2,7 @@ use bytes::Bytes;
 use http::Response;
 
 use crate::{
-    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+    error::APIError, impl_query, AsyncClient, AsyncQuery, Client, Endpoint, Query,
 };
 
 pub struct Raw<E>(pub E);
@@ -48,7 +48,32 @@ where
     E: Endpoint + Sync,
     C: AsyncClient + Sync,
 {
-    impl_query_async!("request");
+    // impl_query_async!("request");
+    async fn request_async(
+        &self,
+        client: &C,
+    ) -> Result<crate::RequestBuilder, crate::error::APIError<C::Error>> {
+        let method = self.method();
+        let url = client.rest_endpoint(&self.url())?;
+        let request = http::Request::builder().method(method).uri(url.to_string());
+        if let Some(headers) = self.headers()? {
+            let mut request = request;
+            let headers_mut = request.headers_mut();
+            if let Some(headers_mut) = headers_mut {
+                headers_mut.extend(headers);
+            } else {
+                for (key, value) in headers {
+                    request = request.header(
+                        key.ok_or(crate::error::APIError::MissingHeaderName)?,
+                        value,
+                    );
+                }
+            };
+            Ok(request)
+        } else {
+            Ok(request)
+        }
+    }
     
     async fn query_async(&self, client: &C) -> Result<Response<Bytes>, crate::error::APIError<C::Error>> {
         crate::query::AsyncQuery::<Response<Bytes>, C>::finalise_async(

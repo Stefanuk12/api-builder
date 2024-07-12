@@ -31,10 +31,10 @@ where
     C: AsyncClient,
 {
     /// Starts building the query request.
-    fn request_async(
+    async fn request_async(
         &self,
         client: &C,
-    ) -> impl std::future::Future<Output = Result<http::request::Builder, APIError<C::Error>>> + Send;
+    ) -> Result<http::request::Builder, APIError<C::Error>>;
 
     /// Sends the request.
     async fn send_async(
