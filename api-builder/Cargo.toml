@@ -30,7 +30,7 @@ thiserror = "1.0"
 url = "2.4"
 api_builder_derive = { path = "../api-builder-derive", optional = true }
 anyhow = "1.0"
-prost = { version = "0.12", optional = true }
+prost = { version = "0.13", optional = true }
 async-trait = "0.1"
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
