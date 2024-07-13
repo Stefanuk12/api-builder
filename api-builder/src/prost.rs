@@ -2,7 +2,7 @@ use bytes::Bytes;
 use prost::Message;
 
 use crate::{
-    error::APIError, impl_query, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query
 };
 
 pub struct Prost<E>(pub E); 
@@ -34,39 +34,13 @@ where
     }
 }
 
-#[async_trait::async_trait(?Send)]
 impl<E, T, C> AsyncQuery<T, C> for Prost<E>
 where
     E: Endpoint + Sync,
     T: Message + Default,
     C: AsyncClient + Sync,
 {
-    // impl_query_async!("request");
-    async fn request_async(
-        &self,
-        client: &C,
-    ) -> Result<crate::RequestBuilder, crate::error::APIError<C::Error>> {
-        let method = self.method();
-        let url = client.rest_endpoint(&self.url())?;
-        let request = http::Request::builder().method(method).uri(url.to_string());
-        if let Some(headers) = self.headers()? {
-            let mut request = request;
-            let headers_mut = request.headers_mut();
-            if let Some(headers_mut) = headers_mut {
-                headers_mut.extend(headers);
-            } else {
-                for (key, value) in headers {
-                    request = request.header(
-                        key.ok_or(crate::error::APIError::MissingHeaderName)?,
-                        value,
-                    );
-                }
-            };
-            Ok(request)
-        } else {
-            Ok(request)
-        }
-    }
+    impl_query_async!("request");
         
     async fn query_async(&self, client: &C) -> Result<T, crate::error::APIError<C::Error>> {
         crate::query::AsyncQuery::<T, C>::finalise_async(

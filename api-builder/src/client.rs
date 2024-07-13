@@ -76,17 +76,23 @@ where
 }
 
 /// A trait representing an asynchronous client.
-#[async_trait::async_trait(?Send)]
 pub trait AsyncClient: RestClient {
+    #[cfg(not(target_arch = "wasm32"))]
     /// Send a REST query asynchronously.
-    async fn rest_async(
+    fn rest_async(
         &self,
         request: http::Request<Vec<u8>>,
-    ) -> Result<Response<Bytes>, APIError<Self::Error>>;
+    ) -> impl std::future::Future<Output = Result<Response<Bytes>, APIError<Self::Error>>> + Send;
+
+    #[cfg(target_arch = "wasm32")]
+    /// Send a REST query asynchronously.
+    fn rest_async(
+        &self,
+        request: http::Request<Vec<u8>>,
+    ) -> impl std::future::Future<Output = Result<Response<Bytes>, APIError<Self::Error>>>;
 }
 
 #[cfg(feature = "reqwest")]
-#[async_trait::async_trait(?Send)]
 impl<C> AsyncClient for C
 where
     C: ReqwestAsyncClient + Sync,
@@ -122,8 +128,7 @@ where
 pub trait WasmClient: RestClient {}
 #[cfg(target_family = "wasm")]
 #[cfg(not(feature = "reqwest"))]
-#[async_trait::async_trait(?Send)]
-impl<C> AsyncClient for C where C: WasmClient {
+impl<C> AsyncClient for C where C: WasmClient + Sync {
     async fn rest_async(
         &self,
         request: http::Request<Vec<u8>>,

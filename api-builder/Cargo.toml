@@ -39,7 +39,7 @@ web-sys = "0.3"
 js-sys = "0.3"
 
 [features]
-default = ["derive", "prost"]
+default = ["derive", "prost", "reqwest_blocking"]
 reqwest = ["dep:reqwest"]
 reqwest_blocking = ["reqwest", "reqwest/blocking"]
 derive = ["dep:api_builder_derive"]

@@ -276,7 +276,7 @@ macro_rules! impl_query_async {
         ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
-            let request = http::Request::builder().method(method).uri(url.to_string());
+            let request = ::http::Request::builder().method(method).uri(url.to_string());
             if let Some(headers) = self.headers()? {
                 let mut request = request;
                 let headers_mut = request.headers_mut();
@@ -355,7 +355,6 @@ where
     impl_query!("query");
 }
 
-#[async_trait::async_trait(?Send)]
 impl<E, T, C> query::AsyncQuery<T, C> for E
 where
     E: Endpoint + Sync,
