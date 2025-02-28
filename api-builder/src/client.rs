@@ -6,7 +6,7 @@ use http::{request::Builder, Response};
 /// A trait representing a client which can communicate with an instance via REST.
 pub trait RestClient {
     /// The errors which may occur for this client.
-    type Error: std::error::Error + Send + Sync + 'static;
+    type Error: crate::error::APIClientError;
 
     /// Get the URL for the endpoint for the client.
     ///

@@ -32,6 +32,7 @@ api_builder_derive = { path = "../api-builder-derive", optional = true }
 anyhow = "1.0"
 prost = { version = "0.13", optional = true }
 async-trait = "0.1"
+rquest = { version = "2.2", optional = true }
 
 [target.'cfg(target_arch = "wasm32")'.dependencies]
 gloo-net = { git = "https://github.com/rustwasm/gloo.git" }
@@ -39,7 +40,8 @@ web-sys = "0.3"
 js-sys = "0.3"
 
 [features]
-default = []
+default = ["derive"]
+rquest = ["dep:rquest"]
 reqwest = ["dep:reqwest"]
 reqwest_blocking = ["reqwest", "reqwest/blocking"]
 derive = ["dep:api_builder_derive"]

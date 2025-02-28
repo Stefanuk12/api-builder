@@ -26,9 +26,11 @@ pub enum HeaderError {
     Other(#[from] anyhow::Error),
 }
 
+pub trait APIClientError: std::error::Error + Send + Sync + 'static {}
+
 /// Errors that can occur when using API endpoints.
 #[derive(thiserror::Error, Debug)]
-pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
+pub enum APIError<E: APIClientError> {
     /// The client encountered an error.
     #[error(transparent)]
     Client(E),
@@ -39,6 +41,10 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     #[cfg(feature = "reqwest")]
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
+    /// There was an error with `rquest`.
+    #[cfg(feature = "rquest")]
+    #[error(transparent)]
+    Rquest(#[from] rquest::Error),
     /// There was an error with `gloo-net`.
     #[cfg(target_arch = "wasm32")]
     #[error(transparent)]
@@ -62,14 +68,16 @@ pub enum APIError<E: std::error::Error + Send + Sync + 'static> {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
-impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
+impl<E: APIClientError> APIError<E> {
     /// Convert an `APIError<T>` to `APIError<E>`.
-    pub fn from_api_error<T: std::error::Error + Send + Sync + 'static + Into<E>>(err: APIError<T>) -> APIError<E> {
+    pub fn from_api_error<T: APIClientError + Into<E>>(err: APIError<T>) -> APIError<E> {
         match err {
             APIError::Client(e) => APIError::Client(e.into()),
             APIError::HTTP(e) => APIError::HTTP(e),
             #[cfg(feature = "reqwest")]
             APIError::Reqwest(e) => APIError::Reqwest(e),
+            #[cfg(feature = "rquest")]
+            APIError::Rquest(e) => APIError::Rquest(e),
             #[cfg(target_arch = "wasm32")]
             APIError::GlooNet(e) => APIError::GlooNet(e),
             APIError::Body(e) => APIError::Body(e),
@@ -82,12 +90,14 @@ impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
     }
 
     /// Convert `Client` to `Other`.
-    pub fn from_any_api_error<T: std::error::Error + Send + Sync + 'static>(err: APIError<T>) -> APIError<E> {
+    pub fn from_any_api_error<T: APIClientError>(err: APIError<T>) -> APIError<E> {
         match err {
             APIError::Client(e) => APIError::Other(e.into()),
             APIError::HTTP(e) => APIError::HTTP(e),
             #[cfg(feature = "reqwest")]
             APIError::Reqwest(e) => APIError::Reqwest(e),
+            #[cfg(feature = "rquest")]
+            APIError::Rquest(e) => APIError::Rquest(e),
             #[cfg(target_arch = "wasm32")]
             APIError::GlooNet(e) => APIError::GlooNet(e),
             APIError::Body(e) => APIError::Body(e),
@@ -99,13 +109,33 @@ impl<E: std::error::Error + Send + Sync + 'static> APIError<E> {
         }
     }
 
-    /// Convert an error into `APIError<E>`.
-    pub fn from_error<T: std::error::Error + Send + Sync + 'static + Into<E>>(err: T) -> APIError<E> {
-        APIError::Client(err.into())
-    }
-
     /// Convert any error into `APIError<E>` via the `Other` variant.
     pub fn from_any_error<T: std::error::Error + Send + Sync + 'static>(err: T) -> APIError<E> {
         APIError::Other(err.into())
     }
 }
+
+impl<E: APIClientError> From<E> for APIError<E> {
+    fn from(value: E) -> Self {
+        APIError::Client(value)
+    }
+}
+impl<E: APIClientError> From<http::Response<bytes::Bytes>> for APIError<E> {
+    fn from(value: http::Response<bytes::Bytes>) -> Self {
+        Self::Response(value)
+    }
+}
+
+macro_rules! impl_error_conv {
+    ($variant:ident, $err:ty, $variant_2:ident, $err2:ty) => {
+        impl<E: APIClientError> From<$err2> for APIError<E> {
+            fn from(value: $err2) -> Self {
+                Self::$variant(<$err>::$variant_2(value))
+            }
+        }
+    };
+}
+
+impl_error_conv!(Body, BodyError, SerdeJson, serde_json::Error);
+impl_error_conv!(Header, HeaderError, Parse, http::header::InvalidHeaderValue);
+impl_error_conv!(Header, HeaderError, ToStr, http::header::ToStrError);
