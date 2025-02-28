@@ -109,6 +109,11 @@ impl<E: APIClientError> APIError<E> {
         }
     }
 
+    /// Convert an error into `APIError<E>`.
+    pub fn from_error<T: std::error::Error + Send + Sync + 'static + Into<E>>(err: T) -> APIError<E> {
+        APIError::Client(err.into())
+    }
+
     /// Convert any error into `APIError<E>` via the `Other` variant.
     pub fn from_any_error<T: std::error::Error + Send + Sync + 'static>(err: T) -> APIError<E> {
         APIError::Other(err.into())
