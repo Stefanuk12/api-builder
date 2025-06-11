@@ -3,7 +3,7 @@ use api_builder::error::APIClientError;
 /// Any client errors.
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {}
-impl APIClientError for APIError { }
+impl APIClientError for APIError {}
 
 /// The main client.
 #[derive(api_builder::ReqwestAsyncClient)]

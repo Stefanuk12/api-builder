@@ -106,8 +106,7 @@ where
 
         // Construct the response builder
         #[allow(unused_mut)]
-        let mut http_response = http::Response::builder()
-            .status(response.status());
+        let mut http_response = http::Response::builder().status(response.status());
 
         #[cfg(not(target_family = "wasm"))]
         let mut http_response = http_response.version(response.version());
@@ -128,14 +127,17 @@ where
 pub trait WasmClient: RestClient {}
 #[cfg(target_family = "wasm")]
 #[cfg(not(feature = "reqwest"))]
-impl<C> AsyncClient for C where C: WasmClient + Sync {
+impl<C> AsyncClient for C
+where
+    C: WasmClient + Sync,
+{
     async fn rest_async(
         &self,
         request: http::Request<Vec<u8>>,
     ) -> Result<Response<Bytes>, APIError<Self::Error>> {
+        use gloo_net::http::{Headers, RequestBuilder};
+        pub use http::{header::HeaderValue, Response};
         use web_sys::RequestCredentials;
-        use gloo_net::http::{RequestBuilder, Headers};
-        pub use http::{Response, header::HeaderValue};
 
         let headers = Headers::new();
         request.headers().iter().for_each(|(key, value)| {
@@ -150,20 +152,20 @@ impl<C> AsyncClient for C where C: WasmClient + Sync {
             .headers(headers);
 
         let response = match request.method() {
-            &http::Method::GET | &http::Method::HEAD => {
-                response.send().await?
-            },
+            &http::Method::GET | &http::Method::HEAD => response.send().await?,
             _ => {
-                response.body(js_sys::Uint8Array::from(request.body().as_slice()))?.send().await?
+                response
+                    .body(js_sys::Uint8Array::from(request.body().as_slice()))?
+                    .send()
+                    .await?
             }
         };
-        
-        let mut res = Response::builder()
-            .status(response.status());
+
+        let mut res = Response::builder().status(response.status());
 
         for (key, value) in response.headers().entries() {
             let Ok(value) = HeaderValue::from_str(value.as_str()) else {
-                continue
+                continue;
             };
 
             res = res.header(key.as_str(), value);

@@ -2,7 +2,9 @@
 use bytes::Bytes;
 use http::{header::CONTENT_TYPE, request::Builder, Response};
 
-use crate::{error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query};
+use crate::{
+    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+};
 
 pub struct Raw<E>(pub E);
 impl<E> std::ops::Deref for Raw<E> {
@@ -19,7 +21,7 @@ where
 {
     impl_query!("request");
     impl_query!("send");
-   
+
     fn query(&self, client: &C) -> Result<Response<Bytes>, APIError<C::Error>> {
         Query::<Response<Bytes>, C>::finalise(
             self,
@@ -47,7 +49,7 @@ where
     C: AsyncClient + Sync,
 {
     impl_query_async!("request");
-    
+
     async fn query_async(&self, client: &C) -> Result<Response<Bytes>, APIError<C::Error>> {
         AsyncQuery::<Response<Bytes>, C>::finalise_async(
             self,
@@ -68,11 +70,7 @@ where
     ) -> Result<Response<Bytes>, APIError<C::Error>> {
         if let Some((mime, body)) = self.body()? {
             client
-                .rest_async(
-                    request
-                        .header(CONTENT_TYPE, mime)
-                        .body(body)?,
-                )
+                .rest_async(request.header(CONTENT_TYPE, mime).body(body)?)
                 .await
         } else {
             client.rest_async(request.body(Vec::new())?).await

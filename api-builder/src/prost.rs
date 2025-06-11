@@ -2,10 +2,10 @@ use bytes::Bytes;
 use prost::Message;
 
 use crate::{
-    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query
+    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query,
 };
 
-pub struct Prost<E>(pub E); 
+pub struct Prost<E>(pub E);
 impl<E> std::ops::Deref for Prost<E> {
     type Target = E;
 
@@ -41,7 +41,7 @@ where
     C: AsyncClient + Sync,
 {
     impl_query_async!("request");
-        
+
     async fn query_async(&self, client: &C) -> Result<T, crate::error::APIError<C::Error>> {
         crate::query::AsyncQuery::<T, C>::finalise_async(
             self,

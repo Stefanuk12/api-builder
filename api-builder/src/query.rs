@@ -14,11 +14,7 @@ where
     fn request(&self, client: &C) -> Result<Builder, APIError<C::Error>>;
 
     /// Sends the request.
-    fn send(
-        &self,
-        client: &C,
-        request: Builder,
-    ) -> Result<Response<Bytes>, APIError<C::Error>>;
+    fn send(&self, client: &C, request: Builder) -> Result<Response<Bytes>, APIError<C::Error>>;
 
     /// Finalises the request by returning the response.
     fn finalise(&self, response: Response<Bytes>) -> Result<T, APIError<C::Error>>;
@@ -61,13 +57,8 @@ where
 
     /// Perform the query asynchronously against the client.
     #[cfg(not(target_arch = "wasm32"))]
-    fn query_async(
-        &self,
-        client: &C,
-    ) -> impl Future<Output = Result<T, APIError<C::Error>>> + Send;
+    fn query_async(&self, client: &C)
+        -> impl Future<Output = Result<T, APIError<C::Error>>> + Send;
     #[cfg(target_arch = "wasm32")]
-    fn query_async(
-        &self,
-        client: &C,
-    ) -> impl Future<Output = Result<T, APIError<C::Error>>>;
+    fn query_async(&self, client: &C) -> impl Future<Output = Result<T, APIError<C::Error>>>;
 }
