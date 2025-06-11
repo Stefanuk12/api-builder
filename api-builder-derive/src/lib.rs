@@ -114,11 +114,11 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
 
         // Additonal checks could be added like checking for constants or something...
 
-        return quote! {
+        quote! {
             fn path(&self) -> ::std::borrow::Cow<'static, str> {
                 ::std::borrow::Cow::Owned(#p)
             }
-        };
+        }
     });
     add_impl_input!(impl_input, path);
 

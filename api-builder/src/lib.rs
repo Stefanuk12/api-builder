@@ -157,12 +157,12 @@ pub trait Endpoint {
     fn url(&self) -> String {
         let mut url = self.path().to_string();
         if let Some(query) = self.query_params() {
-            url.push_str("?");
+            url.push('?');
             for x in query.iter() {
                 url.push_str(&x.key);
-                url.push_str("=");
+                url.push('=');
                 url.push_str(&x.value);
-                url.push_str("&");
+                url.push('&');
             }
             url.pop();
         }
@@ -183,7 +183,7 @@ pub trait Endpoint {
         &self,
         response: http::Response<Bytes>,
     ) -> Result<T, error::BodyError> {
-        Ok(serde_json::from_slice(&response.body())?)
+        Ok(serde_json::from_slice(response.body())?)
     }
 }
 
