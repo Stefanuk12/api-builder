@@ -124,14 +124,14 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let body = _args.self_as_body
         .map(|p| quote ! {
-            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, api_builder::error::BodyError> {
-                Ok(Some((#p, ::serde_json::to_vec(self)?)))
+            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, api_builder::error::BodyError> {
+                Ok(Some((#p.into(), ::serde_json::to_vec(self)?)))
             }
         })
         .or_else(|| _args.prost_self_as_body.map(|p| quote ! {
-            fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, api_builder::error::BodyError> {
+            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, api_builder::error::BodyError> {
                 use prost::Message;
-                Ok(Some(("application/protobuf", #p::from(self.clone()).encode_to_vec())))
+                Ok(Some(("application/protobuf".into(), #p::from(self.clone()).encode_to_vec())))
             }
         }));
     add_impl_input!(impl_input, body);

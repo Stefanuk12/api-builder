@@ -172,7 +172,7 @@ pub trait Endpoint {
     /// The body for the endpoint.
     ///
     /// Returns the `Content-Encoding` header for the data as well as the data itself.
-    fn body(&self) -> Result<Option<(&'static str, Vec<u8>)>, error::BodyError> {
+    fn body(&self) -> Result<Option<(std::borrow::Cow<'static, str>, Vec<u8>)>, error::BodyError> {
         Ok(None)
     }
 
@@ -230,7 +230,7 @@ macro_rules! impl_query {
             if let Some((mime, body)) = self.body()? {
                 client.rest(
                     request
-                        .header(::http::header::CONTENT_TYPE, mime)
+                        .header(::http::header::CONTENT_TYPE, mime.as_ref())
                         .body(body)?,
                 )
             } else {
@@ -421,7 +421,7 @@ where
             client
                 .rest_async(
                     request
-                        .header(::http::header::CONTENT_TYPE, mime)
+                        .header(::http::header::CONTENT_TYPE, mime.as_ref())
                         .body(body)?,
                 )
                 .await
