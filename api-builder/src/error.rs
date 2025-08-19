@@ -29,6 +29,8 @@ pub enum HeaderError {
 pub trait APIClientError: std::error::Error + Send + Sync + 'static {}
 
 /// Errors that can occur when using API endpoints.
+/// 
+/// TODO: consider making this error struct lighter, there's a lot of bloat
 #[derive(thiserror::Error, Debug)]
 pub enum APIError<E: APIClientError> {
     /// The client encountered an error.
