@@ -2,6 +2,7 @@
 use crate::error::APIError;
 use bytes::Bytes;
 use http::Response;
+use url::Url;
 
 /// A trait representing a client which can communicate with an instance via REST.
 pub trait RestClient {
@@ -11,7 +12,7 @@ pub trait RestClient {
     /// Get the URL for the endpoint for the client.
     ///
     /// This method adds the hostname for the client's target instance.
-    fn rest_endpoint(&self, path: &str) -> Result<url::Url, APIError<Self::Error>>;
+    fn rest_endpoint(&self, path: &str) -> Result<Url, APIError<Self::Error>>;
 }
 
 /// A trait represnting a client which includes a reqwest client.
