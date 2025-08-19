@@ -1,7 +1,7 @@
 // Dependencies
 use crate::error::APIError;
 use bytes::Bytes;
-use http::{request::Builder, Response};
+use http::Response;
 
 /// A trait representing a client which can communicate with an instance via REST.
 pub trait RestClient {
@@ -12,12 +12,6 @@ pub trait RestClient {
     ///
     /// This method adds the hostname for the client's target instance.
     fn rest_endpoint(&self, path: &str) -> Result<url::Url, APIError<Self::Error>>;
-
-    /// Modifies the request.
-    /// NOTE: This is done before adding the body (the final step), so it may be overwritten.
-    fn modify_request(&self, request: Builder) -> Result<Builder, APIError<Self::Error>> {
-        Ok(request)
-    }
 }
 
 /// A trait represnting a client which includes a reqwest client.
