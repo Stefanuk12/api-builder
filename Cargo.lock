@@ -542,7 +542,8 @@ checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
 [[package]]
 name = "gloo-net"
 version = "0.6.0"
-source = "git+https://github.com/rustwasm/gloo.git#d600d3ac934b1c62b7009c22eabe2f91be4bd974"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "c06f627b1a58ca3d42b45d6104bf1e1a03799df472df00988b6ba21accc10580"
 dependencies = [
  "futures-channel",
  "futures-core",
@@ -562,7 +563,8 @@ dependencies = [
 [[package]]
 name = "gloo-utils"
 version = "0.2.0"
-source = "git+https://github.com/rustwasm/gloo.git#d600d3ac934b1c62b7009c22eabe2f91be4bd974"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0b5555354113b18c547c1d3a98fbf7fb32a9ff4f6fa112ce823a21641a0ba3aa"
 dependencies = [
  "js-sys",
  "serde",
