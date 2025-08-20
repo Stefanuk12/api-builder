@@ -1,5 +1,6 @@
 pub mod body;
-use std::error::Error;
+use core::fmt;
+use std::{error::Error, fmt::Pointer};
 
 pub use body::*;
 pub mod header;
@@ -29,6 +30,17 @@ where
         Self::new(value.into())
     }
 }
+impl<E: APIClientError> fmt::Debug for APIError<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl<E: APIClientError> fmt::Display for APIError<E> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl<E: APIClientError> std::error::Error for APIError<E> {}
 
 struct Inner<E: APIClientError> {
     kind: APIErrorKind<E>,
