@@ -1,9 +1,11 @@
 // Dependencies
 use bytes::Bytes;
-use http::{header::CONTENT_TYPE, request::Builder, Response};
+use http::Response;
 
 use crate::{
-    error::APIError, impl_query, impl_query_async, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+    async_queryer,
+    error::{APIError, APIErrorKind},
+    queryer, AsyncClient, AsyncQuery, Client, Endpoint, Query,
 };
 
 pub struct Raw<E>(pub E);
@@ -19,8 +21,8 @@ where
     E: Endpoint,
     C: Client,
 {
-    impl_query!("request");
-    impl_query!("send");
+    queryer!("request");
+    queryer!("send");
 
     fn query(&self, client: &C) -> Result<Response<Bytes>, APIError<C::Error>> {
         Query::<Response<Bytes>, C>::finalise(
@@ -35,7 +37,7 @@ where
 
     fn finalise(&self, response: Response<Bytes>) -> Result<Response<Bytes>, APIError<C::Error>> {
         if !response.status().is_success() && !self.0.ignore_errors() {
-            Err(APIError::Response(response))?
+            Err(APIErrorKind::Response(response))?
         } else {
             // Deserialize the response
             Ok(response)
@@ -48,7 +50,8 @@ where
     E: Endpoint + Sync,
     C: AsyncClient + Sync,
 {
-    impl_query_async!("request");
+    async_queryer!("request");
+    async_queryer!("send");
 
     async fn query_async(&self, client: &C) -> Result<Response<Bytes>, APIError<C::Error>> {
         AsyncQuery::<Response<Bytes>, C>::finalise_async(
@@ -63,26 +66,12 @@ where
         .await
     }
 
-    async fn send_async(
-        &self,
-        client: &C,
-        request: Builder,
-    ) -> Result<Response<Bytes>, APIError<C::Error>> {
-        if let Some((mime, body)) = self.body()? {
-            client
-                .rest_async(request.header(CONTENT_TYPE, mime.as_ref()).body(body)?)
-                .await
-        } else {
-            client.rest_async(request.body(Vec::new())?).await
-        }
-    }
-
     async fn finalise_async(
         &self,
         response: Response<Bytes>,
     ) -> Result<Response<Bytes>, APIError<C::Error>> {
         if !response.status().is_success() && !self.0.ignore_errors() {
-            Err(APIError::Response(response))?
+            Err(APIErrorKind::Response(response))?
         } else {
             // Deserialize the response
             Ok(response)

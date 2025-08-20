@@ -1,25 +1,18 @@
 // Dependencies
-use api_builder::{Endpoint, Query as _};
+use api_builder::{api_endpoint, api_rest_client, Endpoint, Query as _, ReqwestClient, RestClient};
 
 /// Any client errors.
 #[derive(Debug, thiserror::Error)]
 pub enum APIError {}
 
 /// The main client.
-#[derive(api_builder::ReqwestClient)]
+#[derive(Default, ReqwestClient)]
 pub struct Client {
     /// Inner reqwest client.
     client: reqwest::blocking::Client,
 }
-#[api_builder::api_rest_client(error = APIError, base = "\"https://example.com/v1/\"")]
-impl api_builder::client::RestClient for Client {}
-impl Default for Client {
-    fn default() -> Self {
-        Self {
-            client: reqwest::blocking::Client::new(),
-        }
-    }
-}
+#[api_rest_client(error = APIError, base = "\"https://example.com/v1/\"")]
+impl RestClient for Client {}
 
 /// The expected response for the resource below.
 #[derive(serde::Deserialize)]
@@ -35,7 +28,7 @@ struct Payload {
 }
 
 // Automatically implements `Endpoint` for `Payload`.
-#[api_builder_derive::api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json")]
+#[api_endpoint(method = GET, path = "\"ab\"", self_as_body = "application/json")]
 impl Endpoint for Payload {}
 
 // Add additional methods to the resource.

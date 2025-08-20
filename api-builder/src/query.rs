@@ -1,14 +1,14 @@
 // Dependencies
 use std::future::Future;
 
-use crate::{client::AsyncClient, error::APIError};
+use crate::{client::AsyncClient, error::APIError, Client};
 use bytes::Bytes;
 use http::{request::Builder, Response};
 
 /// A trait which represents a query which may be made to a client.
 pub trait Query<T, C>
 where
-    C: crate::client::Client,
+    C: Client,
 {
     /// Starts building the query request.
     fn request(&self, client: &C) -> Result<Builder, APIError<C::Error>>;

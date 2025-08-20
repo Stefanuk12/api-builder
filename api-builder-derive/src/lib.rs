@@ -84,8 +84,8 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
     // The implementation for each
     let method = _args.method.map(|m| {
         quote! {
-            fn method(&self) -> api_builder::Method {
-                api_builder::Method::#m
+            fn method(&self) -> ::api_builder::Method {
+                ::api_builder::Method::#m
             }
         }
     });
@@ -124,12 +124,12 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let body = _args.self_as_body
         .map(|p| quote ! {
-            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, api_builder::error::BodyError> {
-                Ok(Some((#p.into(), ::serde_json::to_vec(self)?)))
+            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, ::api_builder::error::BodyError> {
+                Ok(Some((#p.into(), ::api_builder::serde_json::to_vec(self)?)))
             }
         })
         .or_else(|| _args.prost_self_as_body.map(|p| quote ! {
-            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, api_builder::error::BodyError> {
+            fn body(&self) -> Result<Option<(::std::borrow::Cow<'static, str>, Vec<u8>)>, ::api_builder::error::BodyError> {
                 use prost::Message;
                 Ok(Some(("application/protobuf".into(), #p::from(self.clone()).encode_to_vec())))
             }
@@ -138,9 +138,9 @@ pub fn api_endpoint(args: TokenStream, input: TokenStream) -> TokenStream {
 
     if _args.prost_response.unwrap_or_default() {
         impl_input.0.items.push(syn::ImplItem::Verbatim(quote! {
-            fn deserialize(&self, response: api_builder::Response<api_builder::Bytes>) -> Result<Self::Response, api_builder::error::BodyError> {
+            fn deserialize(&self, response: ::api_builder::Response<::api_builder::Bytes>) -> Result<Self::Response, ::api_builder::error::BodyError> {
                 use prost::Message;
-                Self::Response::decode(response.body().clone()).map_err(|_| api_builder::error::BodyError::Deserialize)
+                Self::Response::decode(response.into_body()).map_err(|_| ::api_builder::error::BodyError::Deserialize)
             }
         }));
     }
@@ -178,9 +178,9 @@ pub fn api_rest_client(args: TokenStream, input: TokenStream) -> TokenStream {
 
     let base = _args.base
         .map(|b| quote! {
-            fn rest_endpoint(&self, path: &str) -> Result<api_builder::Url, api_builder::error::APIError<Self::Error>> {
-                let url = api_builder::Url::parse(#b).unwrap();
-                Ok(url.join(path).unwrap())
+            fn rest_endpoint(&self, path: &str) -> Result<api_builder::Url, ::api_builder::error::APIError<Self::Error>> {
+                let url = ::api_builder::Url::parse(#b)?;
+                Ok(url.join(path)?)
             }
         });
     add_impl_input!(impl_input, base);
@@ -199,7 +199,7 @@ pub fn derive_reqwest_client(input: TokenStream) -> TokenStream {
 
     // Return the input
     TokenStream::from(quote! {
-        impl api_builder::client::ReqwestClient for #name {
+        impl ::api_builder::client::ReqwestClient for #name {
             fn client(&self) -> &::reqwest::blocking::Client {
                 &self.client
             }
@@ -216,7 +216,7 @@ pub fn derive_reqwest_async_client(input: TokenStream) -> TokenStream {
 
     // Return the input
     TokenStream::from(quote! {
-        impl api_builder::client::ReqwestAsyncClient for #name {
+        impl ::api_builder::client::ReqwestAsyncClient for #name {
             fn client(&self) -> &::reqwest::Client {
                 &self.async_client
             }
