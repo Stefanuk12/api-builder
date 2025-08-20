@@ -1,3 +1,5 @@
+use std::ops::Deref;
+
 use bytes::Bytes;
 use http::Response;
 use prost::Message;
@@ -10,7 +12,7 @@ use crate::{
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Prost<E>(pub E);
-impl<E> std::ops::Deref for Prost<E> {
+impl<E> Deref for Prost<E> {
     type Target = E;
 
     fn deref(&self) -> &Self::Target {
