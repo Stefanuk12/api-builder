@@ -6,9 +6,6 @@ pub enum HttpClientError {
     #[error(transparent)]
     Reqwest(#[from] reqwest::Error),
     /// There was an error with `rquest`.
-    #[cfg(feature = "rquest")]
-    #[error(transparent)]
-    Rquest(#[from] rquest::Error),
     /// There was an error with `gloo-net`.
     #[cfg(target_arch = "wasm32")]
     #[error(transparent)]

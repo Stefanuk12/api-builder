@@ -129,7 +129,5 @@ impl_error_conv!(Header, HeaderError, ToStr, http::header::ToStrError);
 
 #[cfg(feature = "reqwest")]
 impl_error_conv!(HttpClient, HttpClientError, Reqwest, reqwest::Error);
-#[cfg(feature = "rquest")]
-impl_error_conv!(HttpClient, HttpClientError, Rquest, rquest::Error);
 #[cfg(target_arch = "wasm32")]
 impl_error_conv!(HttpClient, HttpClientError, GlooNet, gloo_net::Error);

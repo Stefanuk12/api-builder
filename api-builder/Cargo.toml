@@ -33,7 +33,6 @@ js-sys = "0.3"
 
 [features]
 default = ["derive"]
-rquest = ["dep:rquest"]
 reqwest = ["dep:reqwest"]
 reqwest_blocking = ["reqwest", "reqwest/blocking"]
 default-tls = ["reqwest/default-tls"]
