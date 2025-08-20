@@ -8,6 +8,7 @@ use crate::{
     queryer, AsyncClient, AsyncQuery, Client, Endpoint, Query,
 };
 
+#[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Raw<E>(pub E);
 impl<E> std::ops::Deref for Raw<E> {
     type Target = E;
