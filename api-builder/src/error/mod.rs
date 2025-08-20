@@ -1,7 +1,9 @@
-pub mod body;
-use core::fmt;
-use std::{error::Error, fmt::Pointer};
+use core::{
+    error::Error,
+    fmt::{self, Pointer},
+};
 
+pub mod body;
 pub use body::*;
 pub mod header;
 use bytes::Bytes;
@@ -38,7 +40,7 @@ impl<E> fmt::Display for APIError<E> {
         self.0.fmt(f)
     }
 }
-impl<E> std::error::Error for APIError<E> {}
+impl<E> core::error::Error for APIError<E> {}
 
 struct Inner<E> {
     kind: APIErrorKind<E>,
@@ -90,7 +92,9 @@ impl<E> APIErrorKind<E> {
     }
 
     /// Convert `Client` to `Other`.
-    pub fn from_any_api_error<T: std::error::Error + Sync + Send + 'static>(err: APIErrorKind<T>) -> APIErrorKind<E> {
+    pub fn from_any_api_error<T: core::error::Error + Sync + Send + 'static>(
+        err: APIErrorKind<T>,
+    ) -> APIErrorKind<E> {
         match err {
             APIErrorKind::Client(e) => APIErrorKind::Other(e.into()),
             APIErrorKind::Http(e) => APIErrorKind::Http(e),

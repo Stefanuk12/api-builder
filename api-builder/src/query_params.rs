@@ -1,7 +1,5 @@
-use std::{
-    borrow::Cow,
-    ops::{Deref, DerefMut},
-};
+use core::ops::{Deref, DerefMut};
+use std::borrow::Cow;
 
 #[derive(Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct QueryParamPair {

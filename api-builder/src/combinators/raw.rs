@@ -1,4 +1,5 @@
-// Dependencies
+use core::ops::Deref;
+
 use bytes::Bytes;
 use http::Response;
 
@@ -10,7 +11,7 @@ use crate::{
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]
 pub struct Raw<E>(pub E);
-impl<E> std::ops::Deref for Raw<E> {
+impl<E> Deref for Raw<E> {
     type Target = E;
 
     fn deref(&self) -> &Self::Target {

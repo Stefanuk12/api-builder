@@ -1,4 +1,3 @@
-// Dependencies
 use darling::{ast::NestedMeta, FromMeta};
 use proc_macro::{Span, TokenStream};
 use quote::quote;

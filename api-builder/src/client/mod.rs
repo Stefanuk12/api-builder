@@ -1,4 +1,4 @@
-use std::future::Future;
+use core::future::Future;
 
 use bytes::Bytes;
 use http::{Request, Response};

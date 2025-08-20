@@ -1,4 +1,3 @@
-// Dependencies
 use api_builder::{api_endpoint, Endpoint};
 
 #[derive(serde::Deserialize)]

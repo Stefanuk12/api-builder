@@ -1,4 +1,3 @@
-// Dependencies
 use api_builder::{api_endpoint, api_rest_client, Endpoint, Query as _, ReqwestClient, RestClient};
 
 /// Any client errors.

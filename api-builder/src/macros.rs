@@ -1,4 +1,4 @@
-/// A macro that is similar to `vec!` but for `http::HeaderMap`s.
+/// A macro that is similar to [vec!] but for [http::HeaderMap]s.
 /// This does not check for invalid headers.
 #[macro_export]
 macro_rules! headermap {
@@ -13,7 +13,7 @@ macro_rules! headermap {
     };
 }
 
-/// A macro that is similar to `vec!` but for `http::HeaderMap`s.
+/// A macro that is similar to [vec!] but for [http::HeaderMap]s.
 /// This does check for invalid headers.
 #[macro_export]
 macro_rules! headermap_checked {
@@ -28,9 +28,9 @@ macro_rules! headermap_checked {
     };
 }
 
-/// A helper trait for implementing `Query` for sync clients.
+/// A helper trait for implementing [Query](crate::Query) for sync clients.
 ///
-/// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
+/// If using a combinator, make sure to implement [`Deref`](core::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
 #[macro_export]
 macro_rules! impl_query {
     ("request") => {
@@ -106,9 +106,9 @@ macro_rules! impl_query {
 }
 pub(crate) use impl_query as queryer;
 
-/// A helper trait for implementing `Query` for async clients.
+/// A helper trait for implementing [AsyncQuery](crate::AsyncQuery) for async clients.
 ///
-/// If using a combinator, make sure to implement [`Deref`](std::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
+/// If using a combinator, make sure to implement [`Deref`](core::ops::Deref) for the combinator so the methods of the endpoint can be accessed.
 #[macro_export]
 macro_rules! impl_query_async {
     ("request") => {

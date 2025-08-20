@@ -1,7 +1,6 @@
-// Dependencies
-use std::future::Future;
+use core::future::Future;
 
-use crate::{client::AsyncClient, error::APIError, Client};
+use crate::{error::APIError, AsyncClient, Client};
 use bytes::Bytes;
 use http::{request::Builder, Response};
 
