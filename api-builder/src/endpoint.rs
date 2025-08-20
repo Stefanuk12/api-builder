@@ -33,18 +33,19 @@ pub trait Endpoint {
 
     /// Builds the full URL, including query.
     fn url(&self) -> String {
-        let mut url = self.path().to_string();
+        let mut path = self.path().to_string();
         if let Some(query) = self.query_params() {
-            url.push('?');
-            for x in query.iter() {
-                url.push_str(&x.key);
-                url.push('=');
-                url.push_str(&x.value);
-                url.push('&');
+            let mut serializer = ::url::form_urlencoded::Serializer::new(String::new());
+            for pair in query.iter() {
+                serializer.append_pair(&pair.key, &pair.value);
             }
-            url.pop();
+            let encoded = serializer.finish();
+            if !encoded.is_empty() {
+                path.push('?');
+                path.push_str(&encoded);
+            }
         }
-        url
+        path
     }
 
     /// The body for the endpoint.
