@@ -5,7 +5,7 @@ description = "A simple client-agnostic API builder, inspired by the GitLab crat
 repository = "https://github.com/Stefanuk12/api-builder"
 readme = "README.md"
 version = "0.1.0"
-edition = "2021"
+edition = "2024"
 keywords = ["api", "builder", "rest", "client-agnostic", "agnostic"]
 categories = ["asynchronous", "api-bindings"]
 
