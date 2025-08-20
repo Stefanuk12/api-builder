@@ -7,7 +7,6 @@ pub enum HeaderError {
     MissingHeader(&'static str),
     #[error(transparent)]
     ToStr(#[from] http::header::ToStrError),
-    /// There was invalid header data.
     #[error("invalid header data, missing name")]
     MissingHeaderName,
     #[error(transparent)]
