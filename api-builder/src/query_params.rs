@@ -43,8 +43,12 @@ impl QueryParamPairs {
         name: &str,
         value: std::collections::HashMap<K, V>,
     ) {
-        for (key, value) in value {
-            let key: Cow<'_, _> = key.into();
+        let mut entries: Vec<(Cow<'static, str>, Cow<'static, str>)> = value
+            .into_iter()
+            .map(|(k, v)| (k.into(), v.into()))
+            .collect();
+        entries.sort_by(|a, b| a.0.cmp(&b.0));
+        for (key, value) in entries {
             self.push((format!("{}[{}]", name, key), value));
         }
     }
@@ -69,5 +73,17 @@ impl From<Vec<QueryParamPair>> for QueryParamPairs {
 impl<K: Into<Cow<'static, str>>, V: Into<Cow<'static, str>>> From<Vec<(K, V)>> for QueryParamPairs {
     fn from(value: Vec<(K, V)>) -> Self {
         Self(value.into_iter().map(|x| x.into()).collect())
+    }
+}
+
+impl Extend<QueryParamPair> for QueryParamPairs {
+    fn extend<T: IntoIterator<Item = QueryParamPair>>(&mut self, iter: T) {
+        self.0.extend(iter);
+    }
+}
+
+impl FromIterator<QueryParamPair> for QueryParamPairs {
+    fn from_iter<T: IntoIterator<Item = QueryParamPair>>(iter: T) -> Self {
+        Self(iter.into_iter().collect())
     }
 }
