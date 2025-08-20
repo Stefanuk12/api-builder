@@ -2,7 +2,7 @@ use bytes::Bytes;
 use http::{Request, Response};
 
 use crate::RestClient;
-use crate::{error::APIError, AsyncClient};
+use crate::{APIError, AsyncClient};
 
 /// A trait represnting a client which includes a reqwest client.
 #[cfg(feature = "reqwest")]

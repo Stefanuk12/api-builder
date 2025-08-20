@@ -1,10 +1,10 @@
 use bytes::Bytes;
 use gloo_net::http::{Headers, RequestBuilder};
-use http::{header::HeaderValue, Method, Request, Response};
+use http::{Method, Request, Response, header::HeaderValue};
 use js_sys::Uint8Array;
 use web_sys::RequestCredentials;
 
-use crate::{error::APIError, AsyncClient, RestClient};
+use crate::{APIError, AsyncClient, RestClient};
 
 pub trait WasmClient: RestClient {}
 impl<C> AsyncClient for C

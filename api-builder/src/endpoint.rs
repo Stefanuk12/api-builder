@@ -4,10 +4,7 @@ use bytes::Bytes;
 use http::{HeaderMap, Method, Response};
 use serde::de::DeserializeOwned;
 
-use crate::{
-    error::{BodyError, HeaderError},
-    QueryParamPairs,
-};
+use crate::{BodyError, HeaderError, QueryParamPairs};
 
 /// A trait for providing the necessary information for a single REST API endpoint
 pub trait Endpoint {

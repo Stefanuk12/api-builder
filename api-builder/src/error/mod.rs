@@ -3,14 +3,10 @@ use core::{
     fmt::{self, Pointer},
 };
 
-pub mod body;
-pub use body::*;
-pub mod header;
 use bytes::Bytes;
-pub use header::*;
-pub mod http_client;
 use http::Response;
-pub use http_client::*;
+
+import!(body, header, http_client);
 
 pub struct APIError<E>(Box<Inner<E>>);
 impl<E> APIError<E> {

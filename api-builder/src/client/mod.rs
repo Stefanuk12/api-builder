@@ -4,7 +4,7 @@ use bytes::Bytes;
 use http::{Request, Response};
 use url::Url;
 
-use crate::error::APIError;
+use crate::APIError;
 
 #[cfg(feature = "reqwest")]
 import!(reqwest);

@@ -1,4 +1,4 @@
-use api_builder::{api_rest_client, error::APIClientError, ReqwestAsyncClient, RestClient};
+use api_builder::{ReqwestAsyncClient, RestClient, api_rest_client, error::APIClientError};
 
 /// Any client errors.
 #[derive(Debug, thiserror::Error)]

@@ -1,4 +1,4 @@
-use api_builder::{api_endpoint, Endpoint};
+use api_builder::{Endpoint, api_endpoint};
 
 #[derive(serde::Deserialize)]
 struct Response {

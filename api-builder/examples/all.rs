@@ -1,4 +1,4 @@
-use api_builder::{api_endpoint, api_rest_client, Endpoint, Query as _, ReqwestClient, RestClient};
+use api_builder::{Endpoint, Query as _, ReqwestClient, RestClient, api_endpoint, api_rest_client};
 
 /// Any client errors.
 #[derive(Debug, thiserror::Error)]

@@ -4,9 +4,8 @@ use bytes::Bytes;
 use http::Response;
 
 use crate::{
-    async_queryer,
-    error::{APIError, APIErrorKind},
-    queryer, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+    APIError, APIErrorKind, AsyncClient, AsyncQuery, Client, Endpoint, Query, async_queryer,
+    queryer,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

@@ -5,9 +5,8 @@ use http::Response;
 use prost::Message;
 
 use crate::{
-    async_queryer,
-    error::{APIError, APIErrorKind, BodyError},
-    queryer, AsyncClient, AsyncQuery, Client, Endpoint, Query,
+    APIError, APIErrorKind, AsyncClient, AsyncQuery, BodyError, Client, Endpoint, Query,
+    async_queryer, queryer,
 };
 
 #[derive(Copy, Clone, Eq, PartialEq, Ord, PartialOrd, Hash, Debug, Default)]

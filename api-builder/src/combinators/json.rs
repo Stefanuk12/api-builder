@@ -2,7 +2,7 @@
 
 use serde::de::DeserializeOwned;
 
-use crate::{async_queryer, queryer, AsyncClient, AsyncQuery, Client, Endpoint, Query};
+use crate::{AsyncClient, AsyncQuery, Client, Endpoint, Query, async_queryer, queryer};
 
 impl<E, T, C> Query<T, C> for E
 where

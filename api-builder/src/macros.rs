@@ -37,7 +37,7 @@ macro_rules! impl_query {
         fn request(
             &self,
             client: &C,
-        ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::RequestBuilder, $crate::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
             let request = $crate::Request::builder()
@@ -50,10 +50,8 @@ macro_rules! impl_query {
                     headers_mut.extend(headers);
                 } else {
                     for (key, value) in headers {
-                        request = request.header(
-                            key.ok_or($crate::error::HeaderError::MissingHeaderName)?,
-                            value,
-                        );
+                        request = request
+                            .header(key.ok_or($crate::HeaderError::MissingHeaderName)?, value);
                     }
                 };
                 Ok(request)
@@ -67,7 +65,7 @@ macro_rules! impl_query {
             &self,
             client: &C,
             request: $crate::RequestBuilder,
-        ) -> Result<$crate::Response<$crate::Bytes>, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::Response<$crate::Bytes>, $crate::APIError<C::Error>> {
             if let Some((mime, body)) = self.body()? {
                 client.rest(
                     request
@@ -83,22 +81,22 @@ macro_rules! impl_query {
         fn finalise(
             &self,
             response: $crate::Response<$crate::Bytes>,
-        ) -> Result<T, $crate::error::APIError<C::Error>> {
+        ) -> Result<T, $crate::APIError<C::Error>> {
             if !response.status().is_success() && !self.ignore_errors() {
-                Err($crate::error::APIErrorKind::Response(response))?
+                Err($crate::APIErrorKind::Response(response))?
             } else {
                 Ok(self.deserialize(response)?)
             }
         }
     };
     ("query") => {
-        fn query(&self, client: &C) -> Result<T, $crate::error::APIError<C::Error>> {
-            $crate::query::Query::<T, C>::finalise(
+        fn query(&self, client: &C) -> Result<T, $crate::APIError<C::Error>> {
+            $crate::Query::<T, C>::finalise(
                 self,
-                $crate::query::Query::<T, C>::send(
+                $crate::Query::<T, C>::send(
                     self,
                     client,
-                    $crate::query::Query::<T, C>::request(self, client)?,
+                    $crate::Query::<T, C>::request(self, client)?,
                 )?,
             )
         }
@@ -115,7 +113,7 @@ macro_rules! impl_query_async {
         async fn request_async(
             &self,
             client: &C,
-        ) -> Result<$crate::RequestBuilder, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::RequestBuilder, $crate::APIError<C::Error>> {
             let method = self.method();
             let url = client.rest_endpoint(&self.url())?;
             let request = ::http::Request::builder()
@@ -128,10 +126,8 @@ macro_rules! impl_query_async {
                     headers_mut.extend(headers);
                 } else {
                     for (key, value) in headers {
-                        request = request.header(
-                            key.ok_or($crate::error::HeaderError::MissingHeaderName)?,
-                            value,
-                        );
+                        request = request
+                            .header(key.ok_or($crate::HeaderError::MissingHeaderName)?, value);
                     }
                 };
                 Ok(request)
@@ -145,7 +141,7 @@ macro_rules! impl_query_async {
             &self,
             client: &C,
             request: $crate::RequestBuilder,
-        ) -> Result<$crate::Response<$crate::Bytes>, $crate::error::APIError<C::Error>> {
+        ) -> Result<$crate::Response<$crate::Bytes>, $crate::APIError<C::Error>> {
             if let Some((mime, body)) = self.body()? {
                 client
                     .rest_async(
@@ -166,22 +162,22 @@ macro_rules! impl_query_async {
         async fn finalise_async(
             &self,
             response: $crate::Response<$crate::Bytes>,
-        ) -> Result<T, $crate::error::APIError<C::Error>> {
+        ) -> Result<T, $crate::APIError<C::Error>> {
             if !response.status().is_success() && !self.ignore_errors() {
-                Err($crate::error::APIErrorKind::Response(response))?
+                Err($crate::APIErrorKind::Response(response))?
             } else {
                 Ok(self.deserialize(response)?)
             }
         }
     };
     ("query") => {
-        async fn query_async(&self, client: &C) -> Result<T, $crate::error::APIError<C::Error>> {
-            $crate::query::AsyncQuery::<T, C>::finalise_async(
+        async fn query_async(&self, client: &C) -> Result<T, $crate::APIError<C::Error>> {
+            $crate::AsyncQuery::<T, C>::finalise_async(
                 self,
-                $crate::query::AsyncQuery::<T, C>::send_async(
+                $crate::AsyncQuery::<T, C>::send_async(
                     self,
                     client,
-                    $crate::query::AsyncQuery::<T, C>::request_async(self, client).await?,
+                    $crate::AsyncQuery::<T, C>::request_async(self, client).await?,
                 )
                 .await?,
             )

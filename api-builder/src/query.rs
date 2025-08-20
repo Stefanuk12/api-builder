@@ -1,8 +1,8 @@
 use core::future::Future;
 
-use crate::{error::APIError, AsyncClient, Client};
+use crate::{APIError, AsyncClient, Client};
 use bytes::Bytes;
-use http::{request::Builder, Response};
+use http::{Response, request::Builder};
 
 /// A trait which represents a query which may be made to a client.
 pub trait Query<T, C>
