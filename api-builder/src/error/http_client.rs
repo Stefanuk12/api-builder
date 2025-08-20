@@ -1,5 +1,5 @@
 // Errors that can occur from HTTP clients.
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum HttpClientError {
     /// There was an error with `reqwest`.
     #[cfg(feature = "reqwest")]

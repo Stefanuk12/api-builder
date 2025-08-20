@@ -4,7 +4,7 @@ use bytes::Bytes;
 use http::{Request, Response};
 use url::Url;
 
-use crate::error::{APIClientError, APIError};
+use crate::error::APIError;
 
 #[cfg(feature = "reqwest")]
 import!(reqwest);
@@ -15,7 +15,7 @@ import!(wasm);
 /// A trait representing a client which can communicate with an instance via REST.
 pub trait RestClient {
     /// The errors which may occur for this client.
-    type Error: APIClientError;
+    type Error;
 
     /// Get the URL for the endpoint for the client.
     ///

@@ -1,5 +1,5 @@
 /// Errors that can occur when building the body.
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum BodyError {
     #[error("there was insufficient data to build the body")]
     InsufficientData,

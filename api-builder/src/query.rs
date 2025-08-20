@@ -57,8 +57,11 @@ where
 
     /// Perform the query asynchronously against the client.
     #[cfg(not(target_arch = "wasm32"))]
-    fn query_async(&self, client: &C)
-        -> impl Future<Output = Result<T, APIError<C::Error>>> + Send;
+    fn query_async(&self, client: &C) -> impl Future<Output = Result<T, APIError<C::Error>>> + Send
+    where
+        C::Error: core::error::Error + Sync + Send + 'static;
     #[cfg(target_arch = "wasm32")]
-    fn query_async(&self, client: &C) -> impl Future<Output = Result<T, APIError<C::Error>>>;
+    fn query_async(&self, client: &C) -> impl Future<Output = Result<T, APIError<C::Error>>>
+    where
+        C::Error: core::error::Error + Sync + Send + 'static;
 }

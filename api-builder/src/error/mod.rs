@@ -10,10 +10,8 @@ pub mod http_client;
 use http::Response;
 pub use http_client::*;
 
-pub trait APIClientError: std::error::Error + Send + Sync + 'static {}
-
-pub struct APIError<E: APIClientError>(Box<Inner<E>>);
-impl<E: APIClientError> APIError<E> {
+pub struct APIError<E>(Box<Inner<E>>);
+impl<E> APIError<E> {
     pub fn new(kind: APIErrorKind<E>) -> Self {
         Self(Box::new(Inner { kind }))
     }
@@ -22,7 +20,7 @@ impl<E: APIClientError> APIError<E> {
         &self.0.kind
     }
 }
-impl<E: APIClientError, T> From<T> for APIError<E>
+impl<E, T> From<T> for APIError<E>
 where
     T: Into<APIErrorKind<E>>,
 {
@@ -30,27 +28,27 @@ where
         Self::new(value.into())
     }
 }
-impl<E: APIClientError> fmt::Debug for APIError<E> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<E> fmt::Debug for APIError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
-impl<E: APIClientError> fmt::Display for APIError<E> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<E> fmt::Display for APIError<E> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         self.0.fmt(f)
     }
 }
-impl<E: APIClientError> std::error::Error for APIError<E> {}
+impl<E> std::error::Error for APIError<E> {}
 
-struct Inner<E: APIClientError> {
+struct Inner<E> {
     kind: APIErrorKind<E>,
 }
 
 /// Errors that can occur when using API endpoints.
 ///
 /// TODO: consider making this error struct lighter, there's a lot of bloat
-#[derive(thiserror::Error, Debug)]
-pub enum APIErrorKind<E: APIClientError> {
+#[derive(Debug, thiserror::Error)]
+pub enum APIErrorKind<E> {
     /// The client encountered an error.
     #[error(transparent)]
     Client(E),
@@ -76,9 +74,9 @@ pub enum APIErrorKind<E: APIClientError> {
     #[error(transparent)]
     Other(#[from] anyhow::Error),
 }
-impl<E: APIClientError> APIErrorKind<E> {
+impl<E> APIErrorKind<E> {
     /// Convert an `APIErrorKind<T>` to `APIErrorKind<E>`.
-    pub fn from_api_error<T: APIClientError + Into<E>>(err: APIErrorKind<T>) -> APIErrorKind<E> {
+    pub fn from_api_error<T: Into<E>>(err: APIErrorKind<T>) -> APIErrorKind<E> {
         match err {
             APIErrorKind::Client(e) => APIErrorKind::Client(e.into()),
             APIErrorKind::Http(e) => APIErrorKind::Http(e),
@@ -92,7 +90,7 @@ impl<E: APIClientError> APIErrorKind<E> {
     }
 
     /// Convert `Client` to `Other`.
-    pub fn from_any_api_error<T: APIClientError>(err: APIErrorKind<T>) -> APIErrorKind<E> {
+    pub fn from_any_api_error<T: std::error::Error + Sync + Send + 'static>(err: APIErrorKind<T>) -> APIErrorKind<E> {
         match err {
             APIErrorKind::Client(e) => APIErrorKind::Other(e.into()),
             APIErrorKind::Http(e) => APIErrorKind::Http(e),
@@ -115,21 +113,9 @@ impl<E: APIClientError> APIErrorKind<E> {
         APIErrorKind::Other(err.into())
     }
 }
-
-impl<E: APIClientError> From<E> for APIErrorKind<E> {
-    fn from(value: E) -> Self {
-        APIErrorKind::Client(value)
-    }
-}
-impl<E: APIClientError> From<Response<Bytes>> for APIErrorKind<E> {
-    fn from(value: Response<Bytes>) -> Self {
-        Self::Response(value)
-    }
-}
-
 macro_rules! impl_error_conv {
     ($variant:ident, $err:ty, $variant_2:ident, $err2:ty) => {
-        impl<E: APIClientError> From<$err2> for APIErrorKind<E> {
+        impl<E> From<$err2> for APIErrorKind<E> {
             fn from(value: $err2) -> Self {
                 Self::$variant(<$err>::$variant_2(value))
             }

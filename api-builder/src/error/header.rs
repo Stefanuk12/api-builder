@@ -1,5 +1,5 @@
 /// Errors that can occur when adding headers.
-#[derive(thiserror::Error, Debug)]
+#[derive(Debug, thiserror::Error)]
 pub enum HeaderError {
     #[error(transparent)]
     Parse(#[from] http::header::InvalidHeaderValue),
