@@ -73,7 +73,7 @@ pub enum APIErrorKind<E> {
     Other(#[from] anyhow::Error),
 }
 impl<E> APIErrorKind<E> {
-    /// Convert an `APIErrorKind<T>` to `APIErrorKind<E>`.
+    /// Convert an [`APIErrorKind<T>`] to [`APIErrorKind<E>`].
     pub fn from_api_error<T: Into<E>>(err: APIErrorKind<T>) -> APIErrorKind<E> {
         match err {
             APIErrorKind::Client(e) => APIErrorKind::Client(e.into()),
@@ -87,7 +87,7 @@ impl<E> APIErrorKind<E> {
         }
     }
 
-    /// Convert `Client` to `Other`.
+    /// Convert [`APIErrorKind::Client`] to [`APIErrorKind::Other`].
     pub fn from_any_api_error<T: core::error::Error + Sync + Send + 'static>(
         err: APIErrorKind<T>,
     ) -> APIErrorKind<E> {
@@ -103,16 +103,23 @@ impl<E> APIErrorKind<E> {
         }
     }
 
-    /// Convert an error into `APIErrorKind<E>`.
+    /// Convert an error into [`APIErrorKind`].
     pub fn from_error<T: Error + Send + Sync + 'static + Into<E>>(err: T) -> APIErrorKind<E> {
         APIErrorKind::Client(err.into())
     }
 
-    /// Convert any error into `APIErrorKind<E>` via the `Other` variant.
+    /// Convert any error into [`APIErrorKind::Other`].
     pub fn from_any_error<T: Error + Send + Sync + 'static>(err: T) -> APIErrorKind<E> {
         APIErrorKind::Other(err.into())
     }
 }
+
+impl<E> From<Response<Bytes>> for APIErrorKind<E> {
+    fn from(value: Response<Bytes>) -> Self {
+        Self::Response(value)
+    }
+}
+
 macro_rules! impl_error_conv {
     ($variant:ident, $err:ty, $variant_2:ident, $err2:ty) => {
         impl<E> From<$err2> for APIErrorKind<E> {
