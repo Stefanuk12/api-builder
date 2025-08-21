@@ -42,15 +42,19 @@ struct Inner<E> {
     kind: APIErrorKind<E>,
 }
 
+/// Implementing this trait will also implement [`From<E>`] for [`APIErrorKind<E>`], creating [`APIErrorKind::Client`].
+pub trait APIClientError {}
+
 /// Errors that can occur when using API endpoints.
 ///
+/// NOTE: It's recommended you implement [`APIClientError`] on `<E>` so you get the `From<E>` implementation.
 /// TODO: consider making this error struct lighter, there's a lot of bloat
 #[derive(Debug, thiserror::Error)]
 pub enum APIErrorKind<E> {
     /// The client encountered an error.
     #[error(transparent)]
     Client(E),
-    /// There was an error with `http`.
+    /// There was an error with [`http`].
     #[error(transparent)]
     Http(#[from] http::Error),
     // An error occured in a HTTP client.
@@ -117,6 +121,11 @@ impl<E> APIErrorKind<E> {
 impl<E> From<Response<Bytes>> for APIErrorKind<E> {
     fn from(value: Response<Bytes>) -> Self {
         Self::Response(value)
+    }
+}
+impl<E: APIClientError> From<E> for APIErrorKind<E> {
+    fn from(value: E) -> Self {
+        Self::Client(value)
     }
 }
 
