@@ -1,7 +1,4 @@
-use core::{
-    error::Error,
-    fmt::{self, Pointer},
-};
+use core::{error::Error, fmt};
 
 use bytes::Bytes;
 use http::Response;
@@ -26,17 +23,23 @@ where
         Self::new(value.into())
     }
 }
-impl<E> fmt::Debug for APIError<E> {
+impl<E> fmt::Debug for APIError<E>
+where
+    E: fmt::Debug,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.kind().fmt(f)
     }
 }
-impl<E> fmt::Display for APIError<E> {
+impl<E> fmt::Display for APIError<E>
+where
+    E: fmt::Display,
+{
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        self.0.fmt(f)
+        self.kind().fmt(f)
     }
 }
-impl<E> core::error::Error for APIError<E> {}
+impl<E> Error for APIError<E> where E: fmt::Display + fmt::Debug {}
 
 struct Inner<E> {
     kind: APIErrorKind<E>,
