@@ -5,6 +5,8 @@ use bytes::Bytes;
 use http::{Response, request::Builder};
 
 /// A trait which represents a query which may be made to a client.
+/// 
+/// NOTE: make sure to respect [Endpoint::ignore_errors](crate::Endpoint::ignore_errors) within [Query::finalise].
 pub trait Query<T, C>
 where
     C: Client,
@@ -23,6 +25,8 @@ where
 }
 
 /// A trait which represents an asynchronous query which may be made to a client.
+/// 
+/// NOTE: make sure to respect [Endpoint::ignore_errors](crate::Endpoint::ignore_errors) within [AsyncQuery::finalise_async].
 pub trait AsyncQuery<T, C>
 where
     C: AsyncClient,
