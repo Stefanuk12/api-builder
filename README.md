@@ -41,3 +41,4 @@ For a full example of the client approach, you can read [luarmor-rs](https://git
 
 - Make sure to respect [`Endpoint::ignore_errors`](https://github.com/Stefanuk12/api-builder/blob/master/api-builder/src/endpoint.rs#L12) within your [`Query`](https://github.com/Stefanuk12/api-builder/blob/master/api-builder/src/query.rs#L8)/[`AsyncQuery`](https://github.com/Stefanuk12/api-builder/blob/master/api-builder/src/query.rs#L26) implementations
 - Use [`typed_builder`](https://docs.rs/typed-builder/latest/typed_builder/derive.TypedBuilder.html) on your endpoint structs to make them easier to construct
+- Implement [`APIClientError`](https://github.com/Stefanuk12/api-builder/blob/main/api-builder/src/error/mod.rs#L46) on your custom client errors to get the `From<E>` (and `Try`) impl
