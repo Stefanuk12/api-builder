@@ -53,7 +53,7 @@ pub trait ReqwestClient: RestClient {
 
 #[cfg(feature = "reqwest_blocking")]
 #[cfg(not(target_family = "wasm"))]
-impl<C> Client for C
+impl<C> crate::Client for C
 where
     C: RestClient + ReqwestClient,
 {
