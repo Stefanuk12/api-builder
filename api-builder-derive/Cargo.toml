@@ -4,7 +4,7 @@ license = "MIT"
 description = "The derive macros for the api_builder crate"
 repository = "https://github.com/Stefanuk12/api-builder"
 readme = "README.md"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2024"
 
 [lib]
